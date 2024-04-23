@@ -186,7 +186,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     }
 
-                    "giá vàng" -> {
+                    "giá vàngxx" -> {
                         responseText =
                             getGiaVangFromURLAsync("https://ngoctham.com/bang-gia-vang/").await()
                     }

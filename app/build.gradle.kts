@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.chaquo.python")
 }
 
 android {
@@ -15,6 +16,20 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters += listOf(  "armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
+        version = "3.8"
+    }
+    chaquopy {
+        defaultConfig {
+            version = "3.8"
+        }
+        defaultConfig {
+            pip {
+                install("newspaper3k")
+            }
+        }
     }
 
     buildTypes {
@@ -50,4 +65,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
     implementation ("org.jsoup:jsoup:1.14.3")
+    implementation ("com.github.zagum:SpeechRecognitionView:1.2.2")
 }
