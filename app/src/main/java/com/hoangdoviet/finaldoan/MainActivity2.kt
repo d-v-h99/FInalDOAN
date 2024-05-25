@@ -1,11 +1,14 @@
 package com.hoangdoviet.finaldoan
 
+import android.app.SearchManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.AlarmClock
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
-import android.text.Spanned
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -13,7 +16,6 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.text.HtmlCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
@@ -37,6 +39,12 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
+import java.io.IOException
 import java.net.URL
 import java.util.Locale
 
@@ -58,6 +66,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         binding = ActivityMain2Binding.inflate(layoutInflater)
         setContentView(binding.root)
+
         //recyclerView()
         setup()
         //clickEvents()
@@ -65,7 +74,9 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (! Python.isStarted()) {
             Python.start(AndroidPlatform(this))
         }
-        callGetArticle("https://vnexpress.net/")
+        CoroutineScope(Dispatchers.Main).launch {
+            callGetArticle("https://vnexpress.net/")
+        }
     }
 
     private fun setup() {
@@ -77,6 +88,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         binding.layoutChatbox.visibility = View.INVISIBLE
         //
         binding.buttonChatboxSend.setOnClickListener {
+            tts.stop()
             val text: String = binding.edittextChatbox.text.toString()
             binding.edittextChatbox.setText("")
             sendMessage(text)
@@ -89,13 +101,18 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             startRecognition()
             KeyboardToSpeech()
         }
+        messagesList.add(Message("Chào bạn, Tôi có thể giúp gì cho bạn!", Constants.RECEIVE_ID, System.currentTimeMillis().toString()))
+        //readCsvMessage()
+        adapter.insertMessage(Message("Chào bạn, Tôi có thể giúp gì cho bạn!", Constants.RECEIVE_ID, System.currentTimeMillis().toString()))
+
         setUiRecognition()
+
 
     }
     private fun setUiRecognition() {
         // setup Speech Recognition
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-            binding.recognitionView!!.setSpeechRecognizer(speechRecognizer)
+        binding.recognitionView!!.setSpeechRecognizer(speechRecognizer)
         binding.recognitionView!!.setRecognitionListener(object : RecognitionListenerAdapter() {
             override fun onResults(results: Bundle) {
                 finishRecognition()
@@ -130,6 +147,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun startRecognition() {
+        tts.stop()
         binding.btnListen.setVisibility(View.GONE)
         binding.btnKeyBoard.setVisibility(View.GONE)
         binding.recognitionView!!.play()
@@ -161,6 +179,118 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         params.setMargins(0, 0, 0, 410)
         closeKeyboard()
     }
+    private fun writeCsvMessage() {
+        val folder = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            "SpeechApplication"
+        )
+        if (!folder.exists()) {
+            folder.mkdirs()
+        }
+        val csv = File(folder, "message.csv")
+        if (!csv.exists()) {
+            try {
+                csv.createNewFile()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+        var data = ""
+        for (m in messagesList) {
+            data += (m.message + ";" + m.time + ";" + m.id
+            ) + "\n"
+        }
+        Log.d("writeCsvMessage: ", data)
+        var fw: FileWriter? = null
+        try {
+            fw = FileWriter(csv.getAbsoluteFile())
+            val bw = BufferedWriter(fw)
+            bw.write(data)
+            bw.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+    private fun readCsvMessage() {
+        val folder = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            "SpeechApplication"
+        ).absoluteFile
+
+        if (folder.exists()) {
+            val csv = File(folder, "message.csv")
+            if (csv.exists()) {
+                var br: BufferedReader? = null
+                try {
+                    br = csv.bufferedReader()
+                    br.forEachLine { line ->
+                        val ms = line.split(";").dropLastWhile { it.isEmpty() }
+                        if (ms.size == 3) {
+                            val message = ms[0]
+                            val time = ms[1].toLongOrNull()
+                            val isUser = ms[2]
+                            if (message != "Chào bạn, Tôi có thể giúp gì cho bạn!" && time != null) {
+                                Log.d("readCsvMessage", "$message $isUser $time")
+                                messagesList.add(Message(message, isUser, time.toString()))
+                            }
+                        }
+                    }
+                    adapter.notifyDataSetChanged()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                } finally {
+                    try {
+                        br?.close()
+                    } catch (ex: IOException) {
+                        ex.printStackTrace()
+                    }
+                }
+            }
+        }
+    }
+
+
+    private fun readCsvMessage1() {
+        val folder = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            "SpeechApplication"
+        ).absoluteFile
+
+        if (folder.exists()) {
+            val csv = File(folder, "message.csv")
+            if (csv.exists()) {
+                var br: BufferedReader? = null
+                try {
+                    br = csv.bufferedReader()
+                    var line: String?
+                    while (br.readLine().also { line = it } != null) {
+                        val ms = line!!.split(";").dropLastWhile { it.isEmpty() }
+                        if (ms.size == 3) {
+                            val message = ms[0]
+                            val time = ms[1].toLongOrNull()
+                            val isUser = ms[2]
+                            if (message != "Chào bạn, Tôi có thể giúp gì cho bạn!" && time != null) {
+                                Log.d("readCsvMessage", "$message $isUser $time")
+                                messagesList.add(Message(message, isUser, Time.timeStamp()))
+                            }
+                        }
+                    }
+                    adapter.notifyDataSetChanged()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                } finally {
+                    try {
+                        br?.close()
+                    } catch (ex: IOException) {
+                        ex.printStackTrace()
+                    }
+                }
+            }
+        }
+    }
+
+
+
     fun showKeyboard() {
         binding.edittextChatbox.requestFocus()
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
@@ -186,12 +316,14 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onPause()
         finishRecognition()
         speechRecognizer.stopListening()
+        tts.stop()
 
     }
 
     override fun onDestroy() {
         super.onDestroy()
         speechRecognizer.destroy()
+        tts.shutdown()
     }
     override fun onStart() {
         super.onStart()
@@ -201,10 +333,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 binding.reyclerviewMessageList.scrollToPosition(adapter.itemCount - 1)
             }
         }
-    }
-
-    private fun clickEvents() {
-
     }
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
@@ -236,77 +364,112 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun botResponse(message: String) {
         val timeStamp = Time.timeStamp()
+        // Khai báo một CoroutineScope
+        val scope = CoroutineScope(Dispatchers.Main)
         GlobalScope.launch {
             var responseText = ""
             var ArticleText=""
             withContext(Dispatchers.Main) {
 
-                when (message.toLowerCase()) {
-                    "đọc báo" -> {
+                when  {
+                    message.toLowerCase().contains("đọc báo")-> {
                         responseText = titleArticle
 
                     }
-                    "tin số 1" -> {
+                    message.toLowerCase().contains("tin số 1")
+                     -> {
                       var text = hashMap[1]?.third.toString()+"\n"
                         val link = hashMap[1]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
                         responseText= text
                         ArticleText = hashMap[1]?.second.toString()
                     }
-                    "tin số 2" -> {
+                   message.toLowerCase().contains( "tin số 2") -> {
                         var text = hashMap[2]?.third.toString()+"\n"
                         val link = hashMap[2]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
                         responseText= text
                         ArticleText = hashMap[2]?.second.toString()
                     }
-                    "tin số 3" -> {
+                    message.toLowerCase().contains("tin số 3") -> {
                         var text = hashMap[3]?.third.toString()+"\n"
                         val link = hashMap[3]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
                         responseText= text
                         ArticleText = hashMap[3]?.second.toString()
                     }
-                    "tin số 4" -> {
+                    message.toLowerCase().contains("tin số 4") -> {
                         var text = hashMap[4]?.third.toString()+"\n"
                         val link = hashMap[4]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
                         responseText= text
                         ArticleText = hashMap[4]?.second.toString()
                     }
-                    "tin số 5" -> {
+                    message.toLowerCase().contains("tin số 5") -> {
                         var text = hashMap[5]?.third.toString()+"\n"
                         val link = hashMap[5]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
                         responseText= text
                         ArticleText = hashMap[5]?.second.toString()
                     }
-                    "tin số 6" -> {
+                    message.toLowerCase().contains("tin số 6") -> {
                         var text = hashMap[6]?.third.toString()+"\n"
                         val link = hashMap[6]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
                         responseText= text
                         ArticleText = hashMap[6]?.second.toString()
                     }
-                    "tin số 7" -> {
+                    message.toLowerCase().contains("tin số 7") -> {
                         var text = hashMap[7]?.third.toString()+"\n"
                         val link = hashMap[7]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
                         responseText= text
                         ArticleText = hashMap[7]?.second.toString()
                     }
-                    "giá vàngxx" -> {
+                    message.toLowerCase().contains("báo thức") ->{
+                        responseText = "Đặt báo thức thành công"
+                        scope.launch {
+                            delay(1500)
+                            alarm(message)
+                        }
+                    }
+                    message.toLowerCase().contains("đếm ngược") -> {
+                        responseText = "Đặt đếm ngược  thành công"
+                        scope.launch {
+                            delay(1500)
+                            getTimeInSeconds(message)
+                        }
+                    }
+                    message.toLowerCase().contains("gọi taxi") -> {
+                        responseText = "Đang gọi taxi G7"
+                        scope.launch {
+                            delay(1500)
+                            callTaxi()
+                        }
+                    }
+                    message.toLowerCase().contains("tìm kiếm") ->{
+                        responseText = "Tôi sẽ mở google"
+                        val startIndex = message.indexOf("Tìm kiếm thông tin về")
+                        if (startIndex != -1) {
+                            val substring = message.substring(startIndex)
+                            scope.launch {
+                                delay(1500)
+                                search_google(substring)
+                            }
+                        }
+
+                    }
+                    message.toLowerCase().contains("giá vàngxx") -> {
                         responseText =
                             getGiaVangFromURLAsync("https://ngoctham.com/bang-gia-vang/").await()
                     }
-                    "giá xăng" -> {
+                    message.toLowerCase().contains("giá xăng") -> {
                         responseText =
                             getGiaXangFromUrlAsync("https://vnexpress.net/chu-de/gia-xang-dau-3026").await()
                     }
-                    "xổ số" -> {
+                    message.toLowerCase().contains("xổ số") -> {
                         responseText = getXoSoFromUrlAsync("https://api-xsmb.cyclic.app/api/v1").await()
                     }
-
                     else -> {
                         val response = generativeModel.generateContent(message)
                         responseText = response?.text ?: "Không có câu trả lời"
@@ -324,30 +487,29 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }else {
                     playNews(responseText)
                 }
+//Thread { writeCsvMessage() }.start()
 
             }
         }
 
     }
-    fun callGetArticle(url: String) {
+    private suspend fun callGetArticle(url: String) {
         // Khởi tạo một coroutine scope
-        val coroutineScope = CoroutineScope(Dispatchers.Main)
         titleArticle = "Hôm nay có các tin tức sau\n"
         // Bắt đầu một coroutine
-        coroutineScope.launch {
+        withContext(Dispatchers.IO) {
             // Gọi hàm getArticle trong một coroutine
-             hashMap = getArticle(url)
-
-            // Xử lý kết quả trả về từ hàm getArticle
-            for ((key, value) in hashMap) {
-                Log.d("hashMap","Khóa: $key, Giá trị: (${value.first}, ${value.second},TIEU DE ${value.third})")
-                titleArticle+= "Tin số $key ${value.third}\n"
-            }
-            titleArticle+="Bạn muốn đọc tin số mấy?"
-//            Log.d("hashMap", titleArticle)
-
-
+            hashMap = getArticle(url)
         }
+
+        // Xử lý kết quả trả về từ hàm getArticle trên luồng chính
+        for ((key, value) in hashMap) {
+            Log.d("hashMap", "Khóa: $key, Giá trị: (${value.first}, ${value.second}, TIEU DE ${value.third})")
+            titleArticle += "Tin số $key ${value.third}\n"
+        }
+        titleArticle += "Bạn muốn đọc tin số mấy?"
+        // Cập nhật giao diện hoặc thực hiện các tác vụ khác trên luồng chính nếu cần
+        Log.d("hashMap", titleArticle)
     }
     private suspend fun getArticle(url: String): HashMap<Int, Triple<String, String, String>> {
         val hashMap = HashMap<Int, Triple<String, String, String>>()
@@ -538,5 +700,61 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 return@async "Có lỗi xảy ra khi truy cập thông tin XSMB."
             }
         }
+    }
+    private fun alarm(text: String) {
+        if (text.contains(":")) {
+            val ls = text.split(" ")
+            val lstemp = ls[ls.size - 1].split(":")
+            val hour = lstemp[0].toInt()
+            val minutes = lstemp[1].toInt()
+
+            createAlarm( hour, minutes)
+        } else {
+            val ls = text.split(" ")
+            val hour = ls[ls.size - 2].toInt()
+            val minutes = 0
+            createAlarm( hour, minutes)
+        }
+    }
+
+    private fun createAlarm(hour: Int, minutes: Int) {
+        if (hour < 24 && hour >= 0 && minutes < 60 && minutes >= 0) {
+            val intent = Intent(AlarmClock.ACTION_SET_ALARM)
+                .putExtra(AlarmClock.EXTRA_MESSAGE, "Báo thức")
+                .putExtra(AlarmClock.EXTRA_HOUR, hour)
+                .putExtra(AlarmClock.EXTRA_MINUTES, minutes)
+            startActivity(intent)
+        }
+
+    }
+    private fun callTaxi() {
+        val phoneTaxi = "024323232"
+        val intent = Intent(Intent.ACTION_CALL)
+        intent.data = Uri.parse("tel:$phoneTaxi")
+        startActivity(intent)
+    }
+    private fun search_google(key: String) {
+        val intent = Intent(Intent.ACTION_WEB_SEARCH)
+        intent.putExtra(SearchManager.QUERY, key)
+        startActivity(intent)
+    }
+    fun getTimeInSeconds(text: String): Any {
+        val arr = text.split(" ")
+        val unit = arr.find { it in setOf("giây", "phút", "giờ") }
+        val value = arr.getOrNull(2)?.toIntOrNull() ?: 0
+
+        return when (unit) {
+            "giây" -> startTimer("đếm ngươc", value)
+            "phút" -> startTimer("đếm ngươc", value * 60)
+            "giờ" -> startTimer("đếm ngươc", value * 3600)
+            else -> 0
+        }
+    }
+
+    fun startTimer(message: String?, seconds: Int) {
+        val intent = Intent(AlarmClock.ACTION_SET_TIMER)
+            .putExtra(AlarmClock.EXTRA_MESSAGE, message)
+            .putExtra(AlarmClock.EXTRA_LENGTH, seconds)
+        startActivity(intent)
     }
 }

@@ -66,4 +66,10 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
     implementation ("org.jsoup:jsoup:1.14.3")
     implementation ("com.github.zagum:SpeechRecognitionView:1.2.2")
+
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation ("androidx.fragment:fragment-ktx:1.7.0")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
