@@ -7,15 +7,62 @@
     android:layout_height="match_parent"
     android:background="@drawable/gradient_animation"
     tools:context=".MainActivity2">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:background="?attr/colorPrimary"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:title=""
+            app:titleCentered="true">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageButton
+                    android:id="@+id/backActivity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|center_vertical"
+                    android:layout_marginStart="10dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Back"
+                    android:src="@drawable/baseline_arrow_back_ios_24" />
+
+                <TextView
+                    android:id="@+id/toolbar_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Chat bot"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+            </FrameLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/reyclerview_message_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:stackFromEnd="true"
+        android:layout_marginTop="70dp"
         android:layout_marginBottom="150dp"
-
+        app:stackFromEnd="true"
         tools:itemCount="20"
-        tools:listitem="@layout/message_item"/>
+        tools:listitem="@layout/message_item" />
+
     <View
         android:layout_width="0dp"
         android:layout_height="2dp"
@@ -23,7 +70,7 @@
         android:layout_marginBottom="0dp"
         app:layout_constraintBottom_toTopOf="@+id/layout_chatbox"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"/>
+        app:layout_constraintRight_toRightOf="parent" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -50,17 +97,9 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:maxLines="6"/>
+                android:textColor="@color/black"
+                android:maxLines="6" />
 
-            <!--<Button-->
-            <!--android:id="@+id/button_chatbox_send"-->
-            <!--android:text="SEND"-->
-            <!--android:textSize="14dp"-->
-            <!--android:background="?attr/selectableItemBackground"-->
-            <!--android:clickable="true"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:gravity="center" />-->
             <ImageButton
                 android:id="@+id/button_chatbox_send"
                 android:src="@drawable/ic_send"
@@ -69,14 +108,13 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center" />
 
-
             <ImageButton
                 android:id="@+id/btnListesInChatbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@null"
                 android:src="@drawable/ic_microphone"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center" />
 
         </LinearLayout>
 
@@ -84,8 +122,7 @@
             android:id="@+id/layout_speech"
             android:layout_width="match_parent"
             android:layout_height="150dp"
-            android:layout_gravity="bottom"
-           >
+            android:layout_gravity="bottom">
 
             <com.github.zagum.speechrecognitionview.RecognitionProgressView
                 android:id="@+id/recognition_view"
@@ -93,7 +130,6 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:visibility="gone" />
-
 
             <LinearLayout
                 android:layout_width="200dp"

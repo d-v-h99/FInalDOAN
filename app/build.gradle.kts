@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -72,4 +73,12 @@ dependencies {
     implementation ("androidx.fragment:fragment-ktx:1.7.0")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    //
+    implementation ("androidx.navigation:navigation-fragment:2.7.7")
+    implementation ("androidx.navigation:navigation-ui:2.7.7")
+    implementation ("com.contrarywind:Android-PickerView:4.1.9")
+    //
+    implementation ("com.github.prolificinteractive:material-calendarview:1.6.0")
+    implementation ("pub.devrel:easypermissions:3.0.0")
+
 }

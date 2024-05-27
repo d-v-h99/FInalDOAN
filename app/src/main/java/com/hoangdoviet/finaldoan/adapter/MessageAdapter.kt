@@ -1,4 +1,4 @@
-package com.hoangdoviet.demodoan.adapter
+package com.hoangdoviet.finaldoan.adapter
 
 import android.view.LayoutInflater
 import android.view.View

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/DayFragment">
+
+    <fragment
+        android:id="@+id/DayFragment"
+        android:name="com.hoangdoviet.finaldoan.fragment.DayFragment"
+        tools:layout="@layout/fragment_day" />
+    <fragment
+        android:id="@+id/MonthFragment"
+        android:name="com.hoangdoviet.finaldoan.fragment.MonthFragment"
+        tools:layout="@layout/fragment_month" />
+    <fragment
+        android:id="@+id/TaskFragment"
+        android:name="com.hoangdoviet.finaldoan.fragment.TaskFragment"
+        tools:layout="@layout/fragment_task" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.hoangdoviet.finaldoan.fragment.profileFragment"
+        tools:layout="@layout/fragment_profile" />
+</navigation>

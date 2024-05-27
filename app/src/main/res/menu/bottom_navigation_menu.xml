@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="Lịch Ngày"
+        android:icon="@drawable/elements"
+        android:id="@+id/DayFragment"/>
+
+    <item android:title="Lịch tháng"
+        android:icon="@drawable/iconthang1"
+        android:id="@+id/MonthFragment"/>
+    <item
+        android:id="@+id/fab"
+        android:title=""/>
+
+    <item android:title="Nhiệm vụ"
+        android:icon="@drawable/elements"
+        android:id="@+id/TaskFragment"/>
+
+    <item android:title="Cài đặt"
+        android:icon="@drawable/iconsetting"
+        android:id="@+id/profileFragment"/>
+
+</menu>

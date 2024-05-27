@@ -1,9 +1,35 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.FInalDOAN" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.FInalDOAN" parent="Theme.MaterialComponents.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="android:windowBackground">#ECF4D6</item>
+        <item name="android:colorBackground">#ECF4D6</item>
+        <item name="android:statusBarColor">#2D9596</item>
     </style>
 
     <style name="Theme.FInalDOAN" parent="Base.Theme.FInalDOAN" />
+    <style name="CalendarWidgetHeader">
+        <item name="android:textSize">25sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="DateTextAppearance">
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="WeekDayTextAppearance">
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="Theme.ButtomNavigation" parent="Base.Theme.FInalDOAN" />
+
+    <style name="App.Custom.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator" >
+        <item name="android:color">#332D9596</item>
+    </style>
+
 </resources>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:icon="@drawable/ic_baseline_play_circle_24"
+        android:title="Listenn"
+        app:showAsAction="always">
+
+        <menu>
+
+            <item android:title="Speed">
+
+                <menu>
+
+                    <item
+                        android:id="@+id/speed_075x"
+                        android:title="0.75x" />
+
+                    <item
+                        android:id="@+id/speed_1x"
+                        android:title="1x" />
+
+                    <item
+                        android:id="@+id/speed_2x"
+                        android:title="2x" />
+
+                </menu>
+
+            </item>
+
+            <item android:title="Voice">
+
+                <menu>
+
+                    <item
+                        android:id="@+id/voice1"
+                        android:title="Giọng nam - miền Nam" />
+                    <item
+                        android:id="@+id/voice3"
+                        android:title="Giọng nữ - miền Nam" />
+                    <item
+                        android:id="@+id/voice5"
+                        android:title="Giọng nam - miền Bắc" />
+
+                    <item
+                        android:id="@+id/voice2"
+                        android:title="Giọng nữ - miền Bắc" />
+
+
+
+                </menu>
+
+
+            </item>
+
+        </menu>
+
+    </item>
+
+</menu>

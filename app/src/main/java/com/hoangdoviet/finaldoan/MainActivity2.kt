@@ -9,19 +9,23 @@ import android.provider.AlarmClock
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.Voice
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter
 import com.google.ai.client.generativeai.GenerativeModel
-import com.hoangdoviet.demodoan.adapter.MessageAdapter
+import com.hoangdoviet.finaldoan.adapter.MessageAdapter
 import com.hoangdoviet.finaldoan.databinding.ActivityMain2Binding
 import com.hoangdoviet.finaldoan.model.Message
 import com.hoangdoviet.finaldoan.utils.Constants
@@ -42,7 +46,6 @@ import org.jsoup.select.Elements
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.File
-import java.io.FileReader
 import java.io.FileWriter
 import java.io.IOException
 import java.net.URL
@@ -66,9 +69,13 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         binding = ActivityMain2Binding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        val toolbar: Toolbar = binding.toolbar
+        setSupportActionBar(toolbar)
         //recyclerView()
         setup()
+        binding.backActivity.setOnClickListener {
+            this.onBackPressed()
+        }
         //clickEvents()
         tts = TextToSpeech(this, this)
         if (! Python.isStarted()) {
@@ -756,5 +763,112 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             .putExtra(AlarmClock.EXTRA_MESSAGE, message)
             .putExtra(AlarmClock.EXTRA_LENGTH, seconds)
         startActivity(intent)
+    }
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_item_chatbot, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+    private val voice1: Voice = Voice(
+        "vi-vn-x-vif-network", // giong nam mien nam
+        Locale("vi", "VN"),
+        300,
+        300,
+        false,
+        setOf("NA", "f00", "202009152", "female", null)
+    )
+    private val voice2: Voice = Voice(
+        "vi-vn-x-gft-network",
+        Locale("vi", "VN"),
+        300,
+        300,
+        false,
+        setOf("NA", "f00", "202009152", "female", null)
+    )
+    private val voice3: Voice = Voice(
+        "vi-vn-x-vie-local",
+        Locale("vi", "VN"),
+        300,
+        300,
+        false,
+        setOf("NA", "f00", "202009152", "female", null)
+    )
+    private val voice4: Voice = Voice(
+        "vi-vn-x-gft-network",
+        Locale("vi", "VN"),
+        300,
+        300,
+        false,
+        setOf("NA", "f00", "202009152", "female", null)
+    )
+    private val voice5: Voice = Voice(
+        "vi-VN-language",
+        Locale("vi", "VN"),
+        300,
+        300,
+        false,
+        setOf("NA", "f00", "202009152", "female", null)
+    )
+    private val voice6: Voice = Voice(
+        "vi-vn-x-vid-local",
+        Locale("vi", "VN"),
+        300,
+        300,
+        false,
+        setOf("NA", "f00", "202009152", "female", null)
+    )
+
+    private val addedVoices: Set<Voice> = setOf(voice1, voice2, voice3, voice4, voice5, voice6)
+
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        Log.d("Checkkk", addedVoices.toString())
+
+        when (item.itemId) {
+
+
+
+            R.id.speed_075x -> {
+                tts.stop()
+                tts.setSpeechRate(0.75F)
+
+            }
+
+            R.id.speed_1x -> {
+                tts.stop()
+                tts.setSpeechRate(1F)
+
+            }
+
+            R.id.speed_2x -> {
+                tts.stop()
+                tts.setSpeechRate(2F)
+
+            }
+
+            R.id.voice1 -> {
+
+                tts.stop() // giong Nam - niem Nam
+                tts.voice = addedVoices.elementAt(0)
+
+            }
+
+            R.id.voice2 -> {
+                tts.stop() // giong nu - niem Bac
+                tts.voice = addedVoices.elementAt(1)
+            }
+            R.id.voice3 -> {
+                tts.stop() // giọng nữ - miền Nam
+                tts.voice = addedVoices.elementAt(2)
+            }
+            R.id.voice5 -> {
+                tts.stop()// giong nam - mien bac
+                tts.voice = addedVoices.elementAt(4)
+            }
+
+
+            else -> return super.onOptionsItemSelected(item)
+        }
+
+        return true
     }
 }
