@@ -4,15 +4,17 @@ import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.bigkoo.pickerview.builder.TimePickerBuilder
 import com.bigkoo.pickerview.view.TimePickerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.databinding.FragmentEventBinding
 import com.hoangdoviet.finaldoan.databinding.FragmentOneDayBinding
@@ -20,13 +22,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class EventFragment : Fragment() , RepeatModeFragment.OnRepeatModeSelectedListener {
+class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatModeSelectedListener {
     private lateinit var binding: FragmentEventBinding
+    lateinit var textDatePicker: String
+    lateinit var timeStart: String
+    lateinit var timeEnd: String
     private val datePicker by lazy {
         val picker = TimePickerBuilder(requireContext()) { date, v ->
             val formattedDate = formatDate(date)
             Log.i("pvTime", "$formattedDate")
             binding.valueDate.text = formattedDate
+            textDatePicker = date.toString()
         }
             .setType(booleanArrayOf(true, true, true, false, false, false))
             .isDialog(true) //默认设置false ，内部实现将DecorView 作为它的父控件。
@@ -54,6 +60,11 @@ class EventFragment : Fragment() , RepeatModeFragment.OnRepeatModeSelectedListen
         }
         picker
     }
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        return dialog
+    }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -67,22 +78,39 @@ class EventFragment : Fragment() , RepeatModeFragment.OnRepeatModeSelectedListen
             datePicker.show()
         }
         binding.dateStart.setOnClickListener {
-            val timePicker = createTimePicker(binding.valueDateStart)
-            timePicker.show()
+            val result = createTimePicker(binding.valueDateStart)
+            val picker = result.picker
+            picker.show()
+           timeStart = result.timeFormat
         }
         binding.dateEnd.setOnClickListener {
-            val timePicker = createTimePicker(binding.valueDateEnd)
-            timePicker.show()
+            val result = createTimePicker(binding.valueDateEnd)
+            val picker = result.picker
+            picker.show()
+           timeEnd = result.timeFormat
         }
         binding.Repeat.setOnClickListener {
             val dialog = RepeatModeFragment()
             dialog.setTargetFragment(this, 0)
             dialog.show(parentFragmentManager, "RepeatModeFragment")
         }
+        binding.btnSave.setOnClickListener {
+            val temp = binding.valueTitle.text.toString() +"\n"+ textDatePicker +"\n" + binding.valueDateStart.text +"\n"+binding.valueDateEnd.text+"\n"+binding.value4.text
+            Log.d("Checkkkk", temp)
+            val bundle = Bundle()
+            bundle.putString("title", binding.valueTitle.text.toString())
+            bundle.putString("textDatePicker", textDatePicker)
+            bundle.putString("timeStart", binding.valueDateStart.text.toString())
+            bundle.putString("timeEnd", binding.valueDateEnd.text.toString())
+            bundle.putString("repeat", binding.value4.text.toString())
+            MonthFragment().arguments = bundle
+            dismiss()
+        }
     }
-    private fun createTimePicker(view: TextView): TimePickerView {
+    private fun createTimePicker(view: TextView): TimePickerResult {
+        var timeFormat = ""
         val picker = TimePickerBuilder(view.context) { date, _ ->
-            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+             timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
             // Cập nhật giá trị lên TextView tương ứng
             view.text = timeFormat
         }
@@ -110,7 +138,7 @@ class EventFragment : Fragment() , RepeatModeFragment.OnRepeatModeSelectedListen
             setGravity(Gravity.BOTTOM) // Hiển thị ở phía dưới
             setDimAmount(0.3f) // Độ mờ của nền
         }
-        return picker
+        return TimePickerResult(picker, timeFormat)
     }
     fun formatDate(date: Date): String {
         val dayFormat = SimpleDateFormat("dd", Locale.getDefault())
@@ -127,5 +155,7 @@ class EventFragment : Fragment() , RepeatModeFragment.OnRepeatModeSelectedListen
     override fun onRepeatModeSelected(mode: String) {
       binding.value4.text = mode
     }
+    data class TimePickerResult(val picker: TimePickerView, val timeFormat: String)
+
 
 }

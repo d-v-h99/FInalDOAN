@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".fragment.emailFragment">
+
+    <TextView
+        android:id="@+id/tvEmailHeading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="32dp"
+        android:text="Check your email"
+        android:textAlignment="center"
+        android:textColor="#0D0140"
+        android:textSize="32sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvEmailSubHeading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:padding="8dp"
+        android:text="We have sent the reset password to the email address brandonelouis@gmial.com"
+        android:textAlignment="center"
+        android:textColor="#524B6B"
+        app:layout_constraintLeft_toLeftOf="@+id/tvEmailHeading"
+        app:layout_constraintRight_toRightOf="@+id/tvEmailHeading"
+        app:layout_constraintTop_toBottomOf="@+id/tvEmailHeading" />
+
+    <LinearLayout
+        android:id="@+id/EmailContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="42dp"
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvEmailSubHeading">
+
+        <ImageView
+            android:id="@+id/ivForgotPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:padding="16dp"
+            android:src="@drawable/ic_check_email" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOpenEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="#0D0140"
+
+            android:padding="12dp"
+            android:text="Open email"
+            android:textColor="#F9F9F9"
+            android:textSize="16sp"
+            app:cornerRadius="6dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBackToLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginVertical="4dp"
+            android:backgroundTint="#F9F9F9"
+            android:padding="12dp"
+            android:text="Back to login"
+            android:textColor="#0D0140"
+            android:textSize="16sp"
+            app:cornerRadius="6dp"
+            app:strokeColor="#0D0140"
+            app:strokeWidth="2dp" />
+
+        <TextView
+            android:id="@+id/tvEmailResend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="You have not received the email? Resend"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

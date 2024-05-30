@@ -6,8 +6,11 @@
         <item name="android:windowBackground">#ECF4D6</item>
         <item name="android:colorBackground">#ECF4D6</item>
         <item name="android:statusBarColor">#2D9596</item>
+<!--        <item name="bottomSheetDialogTheme">@style/Theme.Design.Light.BottomSheetDialog</item>-->
     </style>
-
+    <style name="Theme.Design.Light.BottomSheetDialog" parent="Base.Theme.FInalDOAN">
+        <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
     <style name="Theme.FInalDOAN" parent="Base.Theme.FInalDOAN" />
     <style name="CalendarWidgetHeader">
         <item name="android:textSize">25sp</item>

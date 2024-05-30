@@ -2,6 +2,10 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     id("com.chaquo.python")
+    id("com.google.gms.google-services")
+    id("androidx.navigation.safeargs")
+    id ("kotlin-kapt")
+    id ("kotlin-parcelize")
 }
 
 android {
@@ -61,6 +65,8 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -80,5 +86,7 @@ dependencies {
     //
     implementation ("com.github.prolificinteractive:material-calendarview:1.6.0")
     implementation ("pub.devrel:easypermissions:3.0.0")
+    //animation
+    implementation ("com.airbnb.android:lottie:3.4.0")
 
 }

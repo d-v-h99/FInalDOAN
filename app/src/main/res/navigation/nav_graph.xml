@@ -17,8 +17,5 @@
         android:id="@+id/TaskFragment"
         android:name="com.hoangdoviet.finaldoan.fragment.TaskFragment"
         tools:layout="@layout/fragment_task" />
-    <fragment
-        android:id="@+id/profileFragment"
-        android:name="com.hoangdoviet.finaldoan.fragment.profileFragment"
-        tools:layout="@layout/fragment_profile" />
+
 </navigation>

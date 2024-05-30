@@ -35,4 +35,10 @@ class HolidaysAdapter(private var holidays: List<Holiday>) :
         holidays = newHolidays
         notifyDataSetChanged()
     }
+    fun clearData(){
+        val newHolidayList = mutableListOf<Holiday>()
+        holidays = newHolidayList
+        notifyDataSetChanged()
+    }
+
 }

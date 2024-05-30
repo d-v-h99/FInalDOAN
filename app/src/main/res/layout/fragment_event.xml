@@ -2,64 +2,19 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#ECF4D6"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     tools:context=".fragment.EventFragment">
 
-    <androidx.appcompat.widget.Toolbar
-        android:layout_marginBottom="70dp"
-        android:id="@+id/toolbarAddresses"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:id="@+id/imageAddressClose"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_close"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/black" />
-
-            <TextView
-                android:id="@+id/tvPaymentMethods"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:text="Thêm sự kiện"
-                android:textColor="@color/black"
-                android:textSize="18sp"
-                app:layout_constraintBottom_toBottomOf="@+id/imageAddressClose"
-                app:layout_constraintStart_toEndOf="@id/imageAddressClose"
-                app:layout_constraintTop_toTopOf="@+id/imageAddressClose" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.appcompat.widget.Toolbar>
 
     <LinearLayout
         android:id="@+id/title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="70dp"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:layout_marginTop="15dp"
-            android:layout_marginBottom="15dp"
-            android:layout_weight="1"
-            android:textSize="16sp"
-            android:text="Tiêu đề："
-            android:textColor="@color/black" />
+        android:gravity="center">
 
         <EditText
             android:id="@+id/valueTitle"
@@ -68,16 +23,11 @@
             android:layout_marginEnd="8dp"
             android:textSize="16sp"
             android:hint="Nhập tiêu đề ..."
+            android:textColorHint="@color/black"
             android:textColor="@color/black"
             android:background="@android:color/transparent"/>
 
-        <ImageView
-            android:id="@+id/rightArrow"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginEnd="15dp"
-            android:rotation="90"
-            android:src="@drawable/ic_up_arrow" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -227,22 +177,24 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:gravity="center">
 
-        <Button
-            android:id="@+id/button"
-            android:layout_width="wrap_content"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+           android:layout_margin="20dp"
             android:text="Xác nhận" />
 
-        <Button
+        <TextView
             android:id="@+id/button2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Huỷ" />
+            android:textColor="@color/black"
+            android:text="Huỷ"
+            android:textSize="16sp"/>
     </LinearLayout>
 
 </LinearLayout>

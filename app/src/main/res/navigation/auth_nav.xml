@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/auth_nav"
+    app:startDestination="@id/loginFragment2">
+
+    <fragment
+        android:id="@+id/forgotPassFragment2"
+        android:name="com.hoangdoviet.finaldoan.fragment.forgotPassFragment"
+        android:label="fragment_forgot_pass"
+        tools:layout="@layout/fragment_forgot_pass" >
+        <action
+            android:id="@+id/action_forgotPassFragment2_to_emailFragment2"
+            app:destination="@id/emailFragment2" />
+    </fragment>
+    <fragment
+        android:id="@+id/loginFragment2"
+        android:name="com.hoangdoviet.finaldoan.fragment.loginFragment"
+        android:label="fragment_login"
+        tools:layout="@layout/fragment_login" >
+        <action
+            android:id="@+id/action_loginFragment2_to_signupFragment2"
+            app:destination="@id/signupFragment2" />
+        <action
+            android:id="@+id/action_loginFragment2_to_forgotPassFragment2"
+            app:destination="@id/forgotPassFragment2" />
+        <action
+            android:id="@+id/action_loginFragment2_to_mainActivity"
+            app:destination="@id/mainActivity" />
+    </fragment>
+    <fragment
+        android:id="@+id/emailFragment2"
+        android:name="com.hoangdoviet.finaldoan.fragment.emailFragment"
+        android:label="fragment_email"
+        tools:layout="@layout/fragment_email" />
+    <fragment
+        android:id="@+id/signupFragment2"
+        android:name="com.hoangdoviet.finaldoan.fragment.signupFragment"
+        android:label="fragment_signup"
+        tools:layout="@layout/fragment_signup" >
+        <action
+            android:id="@+id/action_signupFragment2_to_loginFragment2"
+            app:destination="@id/loginFragment2" />
+        <action
+            android:id="@+id/action_signupFragment2_to_mainActivity"
+            app:destination="@id/mainActivity" />
+    </fragment>
+    <activity
+        android:id="@+id/mainActivity"
+        android:name="com.hoangdoviet.finaldoan.MainActivity"
+        android:label="activity_main"
+        tools:layout="@layout/activity_main" >
+        <argument
+            android:name="testUser"
+            app:argType="com.hoangdoviet.finaldoan.model.LoginUiState" />
+    </activity>
+    <fragment
+        android:id="@+id/profileFragment2"
+        android:name="com.hoangdoviet.finaldoan.fragment.profileFragment"
+        android:label="fragment_profile"
+        tools:layout="@layout/fragment_profile" />
+</navigation>
