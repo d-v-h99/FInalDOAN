@@ -3,6 +3,7 @@ package com.hoangdoviet.finaldoan.fragment
 import android.content.Context
 import android.content.res.Resources
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -68,11 +69,14 @@ override fun onAttach(context: Context) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.title.text = "Đặt lập lại"
-        val options = listOf("Không bao giờ", "Hàng ngày", "Ngày làm việc","Hàng tuần","Hàng tháng","Hàng năm") // Your dynamic options
+        val options = listOf(RepeatMode.Never.name, RepeatMode.Day.name, RepeatMode.WorkDay.name,RepeatMode.Week.name,RepeatMode.Month.name,RepeatMode.Year.name) // Your dynamic options
+        var i = 0
         for (option in options) {
             val radioButton = RadioButton(context).apply {
                 text = option
-                id = View.generateViewId() // Generate unique ID
+                id = i// Generate unique ID
+                i++
+                Log.d("idradio", id.toString())
             }
                 binding.radioGroup.addView(radioButton)
         }
@@ -84,7 +88,7 @@ override fun onAttach(context: Context) {
             val selectedRadioButton = view.findViewById<RadioButton>(checkedId)
             val selectedText = selectedRadioButton?.text
             selectedText?.let {
-                listener?.onRepeatModeSelected(it.toString())
+                listener?.onRepeatModeSelected(it.toString(), selectedRadioButton.id)
             }
             dismissAllowingStateLoss()
 
@@ -105,7 +109,7 @@ override fun onAttach(context: Context) {
         return (this * resources.displayMetrics.density).toInt()
     }
     interface OnRepeatModeSelectedListener {
-        fun onRepeatModeSelected(mode: String)
+        fun onRepeatModeSelected(mode: String, id: Int)
     }
 
 

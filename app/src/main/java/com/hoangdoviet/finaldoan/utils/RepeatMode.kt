@@ -103,15 +103,4 @@ sealed interface RepeatMode : java.io.Serializable {
         }
     }
 
-    companion object {
-        val Pair<Int, Int>.parseLocalRepeatMode: RepeatMode
-            get() = when (first) {
-                1 -> Day
-                2 -> WorkDay
-                3 -> Week
-                4 -> Month
-                5 -> Year
-                else -> Never
-            }
-    }
 }

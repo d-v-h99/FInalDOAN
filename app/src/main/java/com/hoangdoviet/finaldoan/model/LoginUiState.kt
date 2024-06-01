@@ -7,4 +7,5 @@ import kotlinx.parcelize.Parcelize
 data class LoginUiState(
     val username: String = "",
     val email: String = "",
+    val eventID: List<String> = listOf()
 ): Parcelable

@@ -6,12 +6,18 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.firestore.FirebaseFirestore
 import com.hoangdoviet.finaldoan.R
+import com.hoangdoviet.finaldoan.adapter.EventListAdapter
 import com.hoangdoviet.finaldoan.adapter.HolidaysAdapter
+import com.hoangdoviet.finaldoan.databinding.BottomSheetEventListBinding
 import com.hoangdoviet.finaldoan.databinding.FragmentMonthBinding
 import com.hoangdoviet.finaldoan.model.DrawLableForDate
+import com.hoangdoviet.finaldoan.model.Event
 import com.hoangdoviet.finaldoan.model.Holiday
 import com.hoangdoviet.finaldoan.model.LunarCalendar
 import com.hoangdoviet.finaldoan.model.ThoiGianConVat
@@ -32,7 +38,7 @@ import java.util.Calendar
 import java.util.Locale
 
 
-class MonthFragment : Fragment() {
+class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
     private var _binding: FragmentMonthBinding? = null
     private var thoiGianConVat: ThoiGianConVat? = ThoiGianConVat(null)
     private val binding get() = _binding!!
@@ -45,12 +51,23 @@ class MonthFragment : Fragment() {
     val m = calendar.get(Calendar.MONTH)
     val y = calendar.get(Calendar.YEAR)
     private lateinit var holidaysAdapter: HolidaysAdapter
+    private val db = FirebaseFirestore.getInstance()
+    private val eventsRef = db.collection("Events")
+    private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentMonthBinding.inflate(inflater, container, false)
+        binding.calendarView.setOnDateChangedListener { widget, date, selected ->
+            val day = date.day
+            val month = date.month + 1 // CalendarDay month is 0-based, so add 1
+            val year = date.year
+            val dateString = String.format("%02d/%02d/%04d", day, month, year)
+            fetchEventsForDate(dateString)
+        }
+
         return binding.root
     }
 
@@ -81,6 +98,34 @@ class MonthFragment : Fragment() {
         binding.holidaysRecyclerView.adapter = holidaysAdapter
 
 
+
+    }
+    private fun fetchEventsForDate(date: String) {
+        eventsRef.whereEqualTo("date", date).get()
+            .addOnSuccessListener { documents ->
+                val events = documents.toObjects(Event::class.java)
+                if (events.isNotEmpty()) {
+                    showEventsBottomSheet(events)
+                } else {
+                    Toast.makeText(context, "No events for this date", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "Error fetching events: $e", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun showEventsBottomSheet(events: List<Event>) {
+        val dialog = BottomSheetDialog(requireContext())
+        val bottomSheetBinding = BottomSheetEventListBinding.inflate(layoutInflater)
+        dialog.setContentView(bottomSheetBinding.root)
+
+        bottomSheetBinding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = EventListAdapter(events, this@MonthFragment)
+        }
+
+        dialog.show()
     }
     private fun updateHolidays(month: Int) {
         val holidaysForMonth = holidays[month] ?: emptyList()
@@ -196,6 +241,7 @@ class MonthFragment : Fragment() {
             val d = cal.get(Calendar.DAY_OF_MONTH)
             val m = cal.get(Calendar.MONTH) + 1
             val y = cal.get(Calendar.YEAR)
+            val dateString = String.format("%02d/%02d/%04d", d, m, y)
             val result = "{'weekday': '$wd' ,'day': '$d', 'month': '$m', 'year': '$y'}"
             val lunarDate = LunarCalendar().convertSolar2Lunar(d, m, y, 7f)
             val jsonObject = JSONObject(lunarDate)
@@ -207,17 +253,18 @@ class MonthFragment : Fragment() {
             Log.d("abc", ngayconvat.toString())
             binding.yyyyMAL.text = "$day Tháng $month Âm lịch, năm $ngayconvat"
             binding.yyyyM.text = "Tháng $m - $y"
-            holidaysAdapter.clearData()
-            //
-
-                val title: String? = arguments?.getString("title")
-                val textDatePicker: String? = arguments?.getString("textDatePicker")
-                val timeStart: String? = arguments?.getString("timeStart")
-                val timeEnd: String? = arguments?.getString("timeEnd")
-                val repeat: String? = arguments?.getString("repeat")
-                val holidayItem = listOf(Holiday(title.toString(), timeStart+ " - "+ timeEnd))
-                Log.d("aaa", holidayItem.toString())
-                holidaysAdapter.updateHolidays(holidayItem)
+            fetchEventsForDate(dateString)
+//            holidaysAdapter.clearData()
+//            //
+//
+//                val title: String? = arguments?.getString("title")
+//                val textDatePicker: String? = arguments?.getString("textDatePicker")
+//                val timeStart: String? = arguments?.getString("timeStart")
+//                val timeEnd: String? = arguments?.getString("timeEnd")
+//                val repeat: String? = arguments?.getString("repeat")
+//                val holidayItem = listOf(Holiday(title.toString(), timeStart+ " - "+ timeEnd))
+//                Log.d("aaa", holidayItem.toString())
+//                holidaysAdapter.updateHolidays(holidayItem)
 
 
 
@@ -261,6 +308,11 @@ class MonthFragment : Fragment() {
         override fun format(day: CalendarDay?): CharSequence {
             return "" // Trả về chuỗi rỗng để ẩn tiêu đề tháng
         }
+    }
+
+    override fun onEventClick(event: Event) {
+        val fragment = EventFragment.newInstance(event)
+        fragment.show(childFragmentManager, "EventFragment")
     }
 
 }
