@@ -11,6 +11,8 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.setFragmentResultListener
 import com.bigkoo.pickerview.builder.TimePickerBuilder
 import com.bigkoo.pickerview.view.TimePickerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -39,17 +41,25 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
     lateinit var timeEnd: String
     var idRadio: Int = 0
     lateinit var eventDelete: Event
-    companion object {
-        private const val ARG_EVENT = "event"
+    private var position: Int = -1
+//    override fun onCreate(savedInstanceState: Bundle?) {
+//        super.onCreate(savedInstanceState)
+//        arguments?.let {
+//            eventDelete = it.getParcelable("event")!!
+//            position = it.getInt("position")
+//        }
+//    }
 
-        fun newInstance(event: Event): EventFragment {
-            val fragment = EventFragment()
-            val args = Bundle().apply {
-                putParcelable(ARG_EVENT, event)
+
+    companion object {
+        @JvmStatic
+        fun newInstance(event: Event, position: Int) =
+            EventFragment().apply {
+                arguments = Bundle().apply {
+                    putParcelable("event", event)
+                    putInt("position", position)
+                }
             }
-            fragment.arguments = args
-            return fragment
-        }
     }
 
     private val datePicker by lazy {
@@ -104,7 +114,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         binding.valueDateEnd.text = event.timeEnd
         binding.value4.text = when(event.repeat){
             0->"Không bao giờ"
-                1->"Hàng ngày"
+            1->"Hàng ngày"
             2->"Ngày làm việc"
             3->"Hàng tuần"
             4->"Hàng tháng"
@@ -116,9 +126,12 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        arguments?.getParcelable<Event>(ARG_EVENT)?.let { event ->
+        arguments?.getParcelable<Event>("event")?.let { event ->
             populateEventDetails(event)
             eventDelete = event
+        }
+        arguments?.let {
+            position = it.getInt("position")
         }
 
         binding.date.setOnClickListener {
@@ -128,13 +141,13 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
             val result = createTimePicker(binding.valueDateStart)
             val picker = result.picker
             picker.show()
-           timeStart = result.timeFormat
+            timeStart = result.timeFormat
         }
         binding.dateEnd.setOnClickListener {
             val result = createTimePicker(binding.valueDateEnd)
             val picker = result.picker
             picker.show()
-           timeEnd = result.timeFormat
+            timeEnd = result.timeFormat
         }
         binding.Repeat.setOnClickListener {
             val dialog = RepeatModeFragment()
@@ -188,9 +201,13 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         }
         binding.button2.setOnClickListener {
             if(binding.button2.text == "Xoá sự kiện"){
-                Log.d("checkeventdelete", eventDelete.toString())
                 if(eventDelete.originalEventID.isNotEmpty()){
-                    showDeleteEventDialog(eventDelete)
+                    //showDeleteEventDialog(eventDelete)
+                    eventDelete?.let { event ->
+                        val dialog = DeleteEventModeFragment.newInstance(event, position)
+                        dialog.setTargetFragment(this, 0)
+                        dialog.show(parentFragmentManager, "DeleteEventModeFragment")
+                    }
                 }else {
                     deleteEvent(eventDelete.eventID)
                     showToast(requireContext(), "Xoá sự kiẹn thành công")
@@ -200,14 +217,25 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
             }
 
         }
+        // Lắng nghe kết quả từ DeleteEventModeFragment
+        setFragmentResultListener("deleteRequestKey") { requestKey, bundle ->
+            val position = bundle.getInt("position")
+            // Gửi kết quả lại cho MonthFragment
+                setFragmentResult("requestKey", Bundle().apply {
+                putInt("position", position)
+                Log.d("ktraa", position.toString() + " EventModeFragment")
+            })
+            dismiss()
+        }
+
 
 
     }
-    private fun showDeleteEventDialog(event: Event) {
-        val dialog = DeleteEventModeFragment.newInstance(event)
-        dialog.setTargetFragment(this, 0)
-        dialog.show(parentFragmentManager, "DeleteEventModeFragment")
-    }
+//    private fun showDeleteEventDialog(event: Event) {
+//        val dialog = DeleteEventModeFragment.newInstance(event)
+//        dialog.setTargetFragment(this, 0)
+//        dialog.show(parentFragmentManager, "DeleteEventModeFragment")
+//    }
     fun addEventWithRepeats(userId: String, event: Event, repeatMode: RepeatMode, endDate: String) {
         val db = FirebaseFirestore.getInstance()
         val events = createRepeatingEvents(event, repeatMode, endDate)
@@ -262,17 +290,30 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                 showToast(requireContext(), "Error adding event: $e")
             }
     }
-    fun deleteEvent(eventID: String) {
-        val db = FirebaseFirestore.getInstance()
-        val eventRef = db.collection("Events").document(eventID)
-
-        eventRef.delete().addOnSuccessListener {
-            showToast(requireContext(), "Event deleted successfully")
-            dismiss()
-        }.addOnFailureListener { e ->
-            showToast(requireContext(), "Error deleting event: $e")
-            dismiss()
+    private fun deleteEvent(eventId: String) {
+        val currentUserUid = mAuth.currentUser?.uid
+        if (currentUserUid == null) {
+            showToast(requireContext(), "User is not logged in.")
+            return
         }
+        mFirestore.collection("Events").document(eventId).delete()
+            .addOnSuccessListener {
+                mFirestore.collection("User").document(currentUserUid)
+                    .update("eventID", FieldValue.arrayRemove(eventId))
+                    .addOnSuccessListener {
+                        showToast(requireContext(), "Event deleted and user updated successfully")
+                        setFragmentResult("event_update", Bundle().apply {
+                            putString("deleted_event_id", eventId)
+                        })
+                        dismiss()
+                    }
+                    .addOnFailureListener { e ->
+                        showToast(requireContext(), "Error updating user: $e")
+                    }
+            }
+            .addOnFailureListener { e ->
+                showToast(requireContext(), "Error deleting event: $e")
+            }
     }
     // xoa tat ca lich trinh lap giu lai lich trinh goc
     fun deleteAllRepeatingEvents(originalEventID: String) {
@@ -401,7 +442,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
     private fun createTimePicker(view: TextView): TimePickerResult {
         var timeFormat = ""
         val picker = TimePickerBuilder(view.context) { date, _ ->
-             timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+            timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
             // Cập nhật giá trị lên TextView tương ứng
             view.text = timeFormat
         }
@@ -447,7 +488,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
     }
 
     override fun onRepeatModeSelected(mode: String, id: Int) {
-      binding.value4.text = mode
+        binding.value4.text = mode
         idRadio = id
     }
     data class TimePickerResult(val picker: TimePickerView, val timeFormat: String)

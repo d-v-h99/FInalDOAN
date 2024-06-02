@@ -1,6 +1,8 @@
 package com.hoangdoviet.finaldoan.fragment
 
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,8 +10,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.adapter.EventListAdapter
@@ -21,9 +25,12 @@ import com.hoangdoviet.finaldoan.model.Event
 import com.hoangdoviet.finaldoan.model.Holiday
 import com.hoangdoviet.finaldoan.model.LunarCalendar
 import com.hoangdoviet.finaldoan.model.ThoiGianConVat
+import com.hoangdoviet.finaldoan.model.TopRightDotSpan
 import com.hoangdoviet.finaldoan.model.holidays
 import com.hoangdoviet.finaldoan.utils.HolidayData
+import com.hoangdoviet.finaldoan.utils.showToast
 import com.prolificinteractive.materialcalendarview.CalendarDay
+import com.prolificinteractive.materialcalendarview.CalendarMode
 import com.prolificinteractive.materialcalendarview.DayViewDecorator
 import com.prolificinteractive.materialcalendarview.DayViewFacade
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView
@@ -31,11 +38,14 @@ import com.prolificinteractive.materialcalendarview.OnDateSelectedListener
 import com.prolificinteractive.materialcalendarview.OnMonthChangedListener
 import com.prolificinteractive.materialcalendarview.format.TitleFormatter
 import com.prolificinteractive.materialcalendarview.format.WeekDayFormatter
+import com.prolificinteractive.materialcalendarview.spans.DotSpan
 import org.json.JSONObject
 import java.text.DateFormat
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+
 
 
 class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
@@ -54,6 +64,14 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
     private val db = FirebaseFirestore.getInstance()
     private val eventsRef = db.collection("Events")
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    private lateinit var eventListAdapter: EventListAdapter
+    private val events = mutableListOf<Event>()
+    private val eventDates = HashSet<CalendarDay>()
+
+    private val eventDecorators = mutableListOf<EventDecorator>()
+    private val LunarDecorators = mutableListOf<DayViewDecorator>()
+    private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private var isWeekView = true
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -77,7 +95,6 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
         Locale.setDefault(locale)
         binding.calendarView.setTitleFormatter { day ->
             val dateFormat: DateFormat = SimpleDateFormat("LLLL yyyy", locale) // tháng rồi năm
-            //MM/dd/yyyy
             dateFormat.format(day.getDate())
         }
         binding.calendarView.setTitleFormatter(EmptyTitleFormatter()) // Sử dụng EmptyTitleFormatter để ẩn tiêu đề
@@ -91,15 +108,81 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
         binding.calendarView.setOnMonthChangedListener(MonthChangeListener())
         //
         val initialHolidays = HolidayData.holidays[m + 1] ?: emptyList()
-//        val initialHolidays = holidays[m + 1]
         Log.d("Checkckk", initialHolidays.toString())
-        holidaysAdapter = initialHolidays?.let { HolidaysAdapter(it) }!!
+        holidaysAdapter = HolidaysAdapter(initialHolidays)
         binding.holidaysRecyclerView.layoutManager = LinearLayoutManager(context)
         binding.holidaysRecyclerView.adapter = holidaysAdapter
+        //
+        eventListAdapter = EventListAdapter(mutableListOf(), this)
+        // Đặt listener sau khi view đã được tạo ra
+        parentFragmentManager.setFragmentResultListener("requestKey", viewLifecycleOwner) { requestKey, bundle ->
+            val position = bundle.getInt("position")
+            // Xóa sự kiện đã xóa khỏi danh sách và thông báo cho adapter
+            events.removeAt(position)
+            eventListAdapter.notifyItemRemoved(position)
+            Log.d("ktraa", position.toString() + " MonthFragment")
+        }
+        if (mAuth.currentUser != null) {
+        fetchAllEvents() }
+        binding.more.setOnClickListener {
+            toggleCalendarView()
+        }
+        childFragmentManager.setFragmentResultListener("requestKey",viewLifecycleOwner){requestKey, bundle ->
+            val position = bundle.getInt("position")
+            // Gửi kết quả lại cho MonthFragment
+            Log.d("ktraa", position.toString() + " MonthFragment")
+            eventListAdapter.removeEventAt(position)
 
 
+        }
 
     }
+    private fun toggleCalendarView() {
+        if (isWeekView) {
+            // Chuyển sang chế độ xem tháng
+            binding.calendarView.state().edit()
+                .setCalendarDisplayMode(CalendarMode.MONTHS)
+                .commit()
+            showToast(requireContext(), "thang")
+        } else {
+            // Chuyển sang chế độ xem 7 ngày
+            binding.calendarView.state().edit()
+                .setCalendarDisplayMode(CalendarMode.WEEKS)
+                .commit()
+            showToast(requireContext(), "tuan")
+        }
+        isWeekView = !isWeekView
+    }
+    private fun fetchAllEvents() {
+        eventsRef.get().addOnSuccessListener { documents ->
+            for (document in documents) {
+                val event = document.toObject(Event::class.java)
+                try {
+                    val date = dateFormat.parse(event.date)
+                    if (date != null) {
+                        val calendar = Calendar.getInstance()
+                        calendar.time = date
+                        val calendarDay = CalendarDay.from(calendar)
+                        eventDates.add(calendarDay)
+                        Log.d("fetchAllEvents", "Event date added: $calendarDay")
+                    } else {
+                        Log.e("fetchAllEvents", "Parsed date is null for event date: ${event.date}")
+                    }
+                } catch (e: ParseException) {
+                    Log.e("fetchAllEvents", "Error parsing date: ${event.date}", e)
+                }
+            }
+            val decorator = EventDecorator(Color.RED, eventDates)
+            eventDecorators.add(decorator)
+            binding.calendarView.addDecorator(decorator)
+            Log.d("fetchAllEvents", "Total event dates added: ${eventDates.size}")
+        }.addOnFailureListener { e ->
+            Toast.makeText(context, "Error fetching events: $e", Toast.LENGTH_SHORT).show()
+            Log.e("fetchAllEvents", "Error: ${e.message}")
+        }
+    }
+
+
     private fun fetchEventsForDate(date: String) {
         eventsRef.whereEqualTo("date", date).get()
             .addOnSuccessListener { documents ->
@@ -122,11 +205,14 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
 
         bottomSheetBinding.recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = EventListAdapter(events, this@MonthFragment)
+            adapter = eventListAdapter.apply {
+                updateEvents(events)
+            }
         }
 
         dialog.show()
     }
+
     private fun updateHolidays(month: Int) {
         val holidaysForMonth = holidays[month] ?: emptyList()
         holidaysAdapter.updateHolidays(holidaysForMonth)
@@ -136,19 +222,18 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
         binding.calendarView.setTileSizeDp(45) // Set kích thước ô ngày
 
         val d = calendar.get(Calendar.DAY_OF_MONTH)
-        val m = calendar.get(Calendar.MONTH)+1
+        val m = calendar.get(Calendar.MONTH) + 1
         val y = calendar.get(Calendar.YEAR)
         val lunarDate = LunarCalendar().convertSolar2Lunar(d, m, y, 7f)
         val jsonObject = JSONObject(lunarDate)
         val day = jsonObject.getString("lunarDay").toInt()
-        val month =jsonObject.getString("lunarMonth").toInt()
+        val month = jsonObject.getString("lunarMonth").toInt()
         val year = jsonObject.getString("lunarYear").toInt()
         val ngayconvat: String? = thoiGianConVat?.getNamConVat(year)
         Log.d("abc", day.toString())
         Log.d("abc", ngayconvat.toString())
         binding.yyyyMAL.text = "$day Tháng $month Âm lịch, năm $ngayconvat"
         binding.yyyyM.text = "Tháng $m - $y"
-
 
         val maxDate = Calendar.getInstance()
         maxDate.set(2070, 12, 31)
@@ -172,7 +257,6 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
     }
 
     private fun setLunar(start: Calendar, end: Calendar) {
-
         while (start <= end) {
             val calendarDay = CalendarDay(
                 start.get(Calendar.YEAR),
@@ -186,20 +270,19 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
                 7f
             )
             val jsonObject = JSONObject(lunarDate)
-            binding.calendarView.addDecorator(
+            val lunar =
                 LunarDecorator(
                     calendarDay,
                     jsonObject.getString("lunarDay").toInt(),
                     jsonObject.getString("lunarMonth").toInt()
                 )
-            )
+            LunarDecorators.add(lunar)
+            binding.calendarView.addDecorator(lunar)
             start.add(Calendar.DAY_OF_MONTH, 1)
         }
     }
 
-
     inner class TodayDecorator : DayViewDecorator {
-
         val calendar = Calendar.getInstance()
 
         override fun shouldDecorate(day: CalendarDay): Boolean {
@@ -214,10 +297,21 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             view.setBackgroundDrawable(resources.getDrawable(R.drawable.current_day))
         }
     }
+   inner class EventDecorator(private val color: Int, dates: Collection<CalendarDay>) : DayViewDecorator {
+        private val dates: HashSet<CalendarDay> = HashSet(dates)
+        private val drawable: Drawable = ColorDrawable(color)
+
+        override fun shouldDecorate(day: CalendarDay): Boolean {
+            return dates.contains(day)
+        }
+
+        override fun decorate(view: DayViewFacade) {
+            view.addSpan(TopRightDotSpan(10f, color)) // 5f là bán kính của chấm
+        }
+    }
 
     inner class LunarDecorator(val dates: CalendarDay, val lunarDay: Int, val lunarMonth: Int) :
         DayViewDecorator {
-
         val calendar = Calendar.getInstance()
 
         override fun shouldDecorate(day: CalendarDay): Boolean {
@@ -232,9 +326,27 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
                 view.addSpan(DrawLableForDate(Color.RED, "0$lunarDay"))
         }
     }
+    private fun removeEventsForDate(date: CalendarDay) {
+        // Xóa các sự kiện từ eventDates cho ngày đã chọn
+        eventDates.remove(date)
+
+        // Xóa các decorator sự kiện hiện tại
+        binding.calendarView.removeDecorators()
+
+        // Thêm lại các decorator khác
+        for (decorator in LunarDecorators) {
+            binding.calendarView.addDecorator(decorator)
+        }
+
+        // Cập nhật lại danh sách decorator sự kiện
+        eventDecorators.clear()
+        val decorator = EventDecorator(Color.RED, eventDates)
+        eventDecorators.add(decorator)
+        binding.calendarView.addDecorator(decorator)
+    }
+
 
     inner class DateSelectedListener : OnDateSelectedListener {
-
         override fun onDateSelected(p0: MaterialCalendarView, p1: CalendarDay, p2: Boolean) {
             val cal = p1.calendar
             val wd = cal.get(Calendar.DAY_OF_WEEK)
@@ -246,34 +358,20 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             val lunarDate = LunarCalendar().convertSolar2Lunar(d, m, y, 7f)
             val jsonObject = JSONObject(lunarDate)
             val day = jsonObject.getString("lunarDay").toInt()
-            val month =jsonObject.getString("lunarMonth").toInt()
+            val month = jsonObject.getString("lunarMonth").toInt()
             val year = jsonObject.getString("lunarYear").toInt()
             val ngayconvat: String? = thoiGianConVat?.getNamConVat(year)
             Log.d("abc", day.toString())
             Log.d("abc", ngayconvat.toString())
             binding.yyyyMAL.text = "$day Tháng $month Âm lịch, năm $ngayconvat"
             binding.yyyyM.text = "Tháng $m - $y"
+            if (mAuth.currentUser != null) {
             fetchEventsForDate(dateString)
-//            holidaysAdapter.clearData()
-//            //
-//
-//                val title: String? = arguments?.getString("title")
-//                val textDatePicker: String? = arguments?.getString("textDatePicker")
-//                val timeStart: String? = arguments?.getString("timeStart")
-//                val timeEnd: String? = arguments?.getString("timeEnd")
-//                val repeat: String? = arguments?.getString("repeat")
-//                val holidayItem = listOf(Holiday(title.toString(), timeStart+ " - "+ timeEnd))
-//                Log.d("aaa", holidayItem.toString())
-//                holidaysAdapter.updateHolidays(holidayItem)
-
-
-
-
+            removeEventsForDate(p1) }
         }
     }
 
     inner class MonthChangeListener : OnMonthChangedListener {
-
         override fun onMonthChanged(p0: MaterialCalendarView?, p1: CalendarDay) {
             val year = p1.year
             val month = p1.month
@@ -292,26 +390,26 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
                 seted[setKey] = ""
             }
             updateHolidays(month + 1)
-            binding.yyyyM.text = "Tháng ${month+1} - $year"
+            binding.yyyyM.text = "Tháng ${month + 1} - $year"
         }
     }
-   inner class CustomWeekDayFormatter : WeekDayFormatter {
 
+    inner class CustomWeekDayFormatter : WeekDayFormatter {
         private val weekDays = arrayOf("CN", "T2", "T3", "T4", "T5", "T6", "T7")
 
         override fun format(dayOfWeek: Int): CharSequence {
-            // Calendar.SUNDAY == 1, Calendar.MONDAY == 2, ..., Calendar.SATURDAY == 7
             return weekDays[dayOfWeek - 1]
         }
     }
+
     inner class EmptyTitleFormatter : TitleFormatter {
         override fun format(day: CalendarDay?): CharSequence {
             return "" // Trả về chuỗi rỗng để ẩn tiêu đề tháng
         }
     }
 
-    override fun onEventClick(event: Event) {
-        val fragment = EventFragment.newInstance(event)
+    override fun onEventClick(event: Event, position: Int) {
+        val fragment = EventFragment.newInstance(event, position)
         fragment.show(childFragmentManager, "EventFragment")
     }
 

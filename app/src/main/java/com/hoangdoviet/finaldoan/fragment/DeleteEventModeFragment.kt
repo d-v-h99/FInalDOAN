@@ -9,6 +9,9 @@ import android.view.ViewGroup
 import android.widget.RadioButton
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.setFragmentResult
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.databinding.FragmentDeleteEventModeBinding
@@ -19,107 +22,124 @@ import com.hoangdoviet.finaldoan.utils.showToast
 import com.hoangdoviet.finaldoan.viewmodel.SharedViewModel
 
 class DeleteEventModeFragment : DialogFragment() {
-    private lateinit var binding : FragmentDeleteEventModeBinding
-    lateinit var eventDelete: Event
-    companion object {
-        private const val ARG_EVENT = "event"
 
-        fun newInstance(event: Event): DeleteEventModeFragment {
-            val fragment = DeleteEventModeFragment()
-            val args = Bundle()
-            args.putParcelable(ARG_EVENT, event)
-            fragment.arguments = args
-            return fragment
-        }
+    private lateinit var binding: FragmentDeleteEventModeBinding
+    private lateinit var eventToDelete: Event
+    private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private var position: Int = -1
+
+    companion object {
+        @JvmStatic
+        fun newInstance(event: Event, position: Int) =
+            DeleteEventModeFragment().apply {
+                arguments = Bundle().apply {
+                    putParcelable("event", event)
+                    putInt("position", position)
+                }
+            }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        binding = FragmentDeleteEventModeBinding.inflate(inflater)
+        binding = FragmentDeleteEventModeBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupUI()
+        arguments?.getParcelable<Event>("event")?.let { event ->
+            this.eventToDelete = event
+        }
         arguments?.let {
-            val event = it.getParcelable<Event>(ARG_EVENT)
-            // Sử dụng dữ liệu event
-            if (event != null) {
-                eventDelete = event
-            }
-        }
-        binding.title.text = "Xoá sự kiện"
-        binding.cancel.setOnClickListener {
-            Toast.makeText(context, "Cancelled", Toast.LENGTH_SHORT).show()
-            dismissAllowingStateLoss()
-        }
-        binding.radioGroup.setOnCheckedChangeListener { group, checkedId ->
-//            val selectedRadioButton = view.findViewById<RadioButton>(checkedId)
-//            val selectedText = selectedRadioButton?.text
-            //dismissAllowingStateLoss()
-            // Do something with the selected text
-            when (checkedId) {
-                R.id.radioButton1 -> {
-                    // Xử lý khi radioButton1 được chọn
-                    //showToast(requireContext(), "xoa1")
-                    deleteEvent(eventDelete.eventID)
-
-                }
-
-                R.id.radioButton2 -> {
-                    //showToast(requireContext(), "xoa2")
-                    // Xử lý khi radioButton2 được chọn
-                    deleteAllRepeatingEvents(eventDelete.originalEventID)
-                }
-
-                else -> {
-                    // Xử lý mặc định hoặc khi không có radioButton nào được chọn
-                }
-            }
+            position = it.getInt("position")
         }
     }
+
     override fun onStart() {
         super.onStart()
         dialog?.window?.setLayout(350.dpToPx(), ViewGroup.LayoutParams.WRAP_CONTENT)
     }
 
+    private fun setupUI() {
+        binding.title.text = getString(R.string.delete_event_title)
+        binding.cancel.setOnClickListener {
+            dismissWithMessage(getString(R.string.cancelled))
+        }
+
+        binding.radioGroup.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.radioButton1 -> eventToDelete.let { deleteEvent(it.eventID) }
+                R.id.radioButton2 -> deleteAllRepeatingEvents(eventToDelete.originalEventID)
+            }
+        }
+    }
+
     private fun Int.dpToPx(): Int {
         return (this * resources.displayMetrics.density).toInt()
     }
-    fun deleteEvent(eventID: String) {
-        val db = FirebaseFirestore.getInstance()
-        val eventRef = db.collection("Events").document(eventID)
 
-        eventRef.delete().addOnSuccessListener {
-            showToast(requireContext(), "Event deleted successfully")
-            dismiss()
-        }.addOnFailureListener { e ->
-            showToast(requireContext(), "Error deleting event: $e")
+    private fun deleteEvent(eventID: String) {
+        val db = FirebaseFirestore.getInstance()
+        val currentUserUid = mAuth.currentUser?.uid
+
+        if (currentUserUid != null) {
+            db.collection("User").document(currentUserUid)
+                .update("eventID", FieldValue.arrayRemove(eventID))
+                .addOnSuccessListener {
+                    db.collection("Events").document(eventID)
+                        .delete()
+                        .addOnSuccessListener {
+                            showToast(requireContext(), getString(R.string.event_deleted))
+                            dismiss()
+                            // Gửi kết quả lại cho EventFragment mặc định c
+                            setFragmentResult("deleteRequestKey", Bundle().apply {
+                                putInt("position", position)
+                                Log.d("ktraa", position.toString() + " deleteEventModeFragment")
+                            })
+                        }
+                        .addOnFailureListener { e ->
+                            showToast(requireContext(), getString(R.string.error_deleting_event, e))
+                        }
+                }
+                .addOnFailureListener { e ->
+                    showToast(requireContext(), getString(R.string.error_removing_event_from_user, e))
+                }
         }
     }
-    fun deleteAllRepeatingEvents(originalEventID: String) {
+
+    private fun deleteAllRepeatingEvents(originalEventID: String) {
         val db = FirebaseFirestore.getInstance()
         val eventsRef = db.collection("Events")
 
-        eventsRef.whereEqualTo("originalEventID", originalEventID).get().addOnSuccessListener { documents ->
-            val batch = db.batch()
-            documents.forEach { document ->
-                batch.delete(document.reference)
-            }
-            batch.commit().addOnSuccessListener {
-                showToast(requireContext(), "All repeating events deleted successfully")
-                dismiss()
+        eventsRef.whereEqualTo("originalEventID", originalEventID).get()
+            .addOnSuccessListener { documents ->
+                val batch = db.batch()
+                documents.forEach { document ->
+                    batch.delete(document.reference)
+                }
+                batch.commit().addOnSuccessListener {
+                    showToast(requireContext(), getString(R.string.repeating_events_deleted))
+                    dismiss()
+                }.addOnFailureListener { e ->
+                    showToast(requireContext(), getString(R.string.error_deleting_repeating_events, e.message))
+                }
             }.addOnFailureListener { e ->
-                showToast(requireContext(), "Error deleting repeating events: $e")
+                showToast(requireContext(), getString(R.string.error_fetching_repeating_events, e.message))
             }
-        }.addOnFailureListener { e ->
-            showToast(requireContext(), "Error fetching repeating events: $e")
-        }
     }
 
+    private fun sendResultBackToParent() {
+        val resultBundle = Bundle().apply {
+            putParcelable("deletedEvent", eventToDelete)
+        }
+        parentFragmentManager.setFragmentResult("deleteEventRequest", resultBundle)
+    }
 
-
+    private fun dismissWithMessage(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        dismissAllowingStateLoss()
+    }
 }

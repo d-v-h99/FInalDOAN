@@ -7,7 +7,7 @@ import com.hoangdoviet.finaldoan.databinding.ItemEventBinding
 import com.hoangdoviet.finaldoan.model.Event
 
 class EventListAdapter(
-    private var events: List<Event>,
+    private val events: MutableList<Event>,
     private val eventClickListener: EventClickListener
 ) : RecyclerView.Adapter<EventListAdapter.EventViewHolder>() {
 
@@ -19,7 +19,7 @@ class EventListAdapter(
     override fun onBindViewHolder(holder: EventViewHolder, position: Int) {
         holder.bind(events[position])
         holder.itemView.setOnClickListener {
-            eventClickListener.onEventClick(events[position])
+            eventClickListener.onEventClick(events[position], position)
         }
     }
 
@@ -31,12 +31,20 @@ class EventListAdapter(
             binding.eventTime.text = "${event.timeStart} - ${event.timeEnd}"
         }
     }
+    fun updateEvents(newEvents: List<Event>) {
+        events.clear()
+        events.addAll(newEvents)
+        notifyDataSetChanged()
+    }
+
+    fun removeEventAt(position: Int) {
+        events.removeAt(position)
+        notifyItemRemoved(position)
+        notifyItemRangeChanged(position, events.size)
+    }
+
 
     interface EventClickListener {
-        fun onEventClick(event: Event)
-    }
-    fun updateEvents(newEvents: List<Event>) {
-        this.events = newEvents
-        notifyDataSetChanged()
+        fun onEventClick(event: Event, position: Int)
     }
 }

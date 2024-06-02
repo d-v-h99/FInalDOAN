@@ -26,4 +26,37 @@
     <string name="field_error_password">Enter valid password</string>
     <string name="reset_pass">Reset Password Send Success</string>
     <string name="reset_fail">Reset Password Failed</string>
+
+    <!-- Fragment titles and messages -->
+    <string name="delete_event_title">Xoá sự kiện</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="event_deleted">Event deleted successfully</string>
+    <string name="repeating_events_deleted">All repeating events deleted successfully</string>
+
+    <!-- Error messages -->
+    <string name="error_deleting_event">Error deleting event: %1$s</string>
+    <string name="error_deleting_repeating_events">Error deleting repeating events: %1$s</string>
+    <string name="error_fetching_repeating_events">Error fetching repeating events: %1$s</string>
+
+    <!-- Other UI strings -->
+    <string name="confirm_delete_single">Delete this event only</string>
+    <string name="confirm_delete_repeating">Delete all repeating events</string>
+    //
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="never">Never</string>
+    <string name="daily">Daily</string>
+    <string name="workday">Workday</string>
+    <string name="weekly">Weekly</string>
+    <string name="monthly">Monthly</string>
+    <string name="yearly">Yearly</string>
+    <string name="edit_event">Edit Event</string>
+    <string name="delete_event">Delete Event</string>
+    <string name="user_not_logged_in">User not logged in.</string>
+    <string name="event_added">Event added successfully.</string>
+    <string name="repeating_events_added">Repeating events added successfully.</string>
+    <string name="error_adding_event">Error adding event: %s</string>
+    <string name="error_adding_repeating_events">Error adding repeating events: %s</string>
+    <string name="error_adding_event_user">Error adding event to user: %s</string>
+    <string name="error_removing_event_from_user">Error removing event from user: %s</string>
 </resources>
