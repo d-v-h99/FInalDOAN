@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.core)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -88,5 +89,9 @@ dependencies {
     implementation ("pub.devrel:easypermissions:3.0.0")
     //animation
     implementation ("com.airbnb.android:lottie:3.4.0")
+    //
+    implementation ("it.xabaras.android:recyclerview-swipedecorator:1.4")
+    //
+    implementation ("androidx.work:work-runtime-ktx:2.7.1")
 
 }
