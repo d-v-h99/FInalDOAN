@@ -38,7 +38,7 @@ class HorizontalCalendarAdapter(
     }
 
 //    @RequiresApi(Build.VERSION_CODES.O)
-    override fun onBindViewHolder(holder: CalendarViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: CalendarViewHolder, @SuppressLint("RecyclerView") position: Int) {
         val itemList = list[position]
         holder.calendarDay.text = itemList.calendarDay
         holder.calendarDate.text = itemList.calendarDate

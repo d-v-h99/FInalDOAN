@@ -36,7 +36,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
     private lateinit var binding: FragmentEventBinding
     private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val mFirestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
-    lateinit var textDatePicker: String
+     var textDatePicker: String =""
     lateinit var timeStart: String
     lateinit var timeEnd: String
     var idRadio: Int = 0
@@ -56,6 +56,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         fun newInstance(event: Event, position: Int) =
             EventFragment().apply {
                 arguments = Bundle().apply {
+                    // Thiết lập arguments của Fragment. Bundle được sử dụng để lưu trữ dữ liệu mà bạn muốn truyền vào Fragment
                     putParcelable("event", event)
                     putInt("position", position)
                 }
@@ -155,46 +156,92 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
             dialog.show(parentFragmentManager, "RepeatModeFragment")
         }
         binding.btnSave.setOnClickListener {
-            try {
-                val currentUserUid = mAuth.currentUser?.uid
-                if (currentUserUid == null) {
-                    showToast(requireContext(), "User is not logged in.")
-                    return@setOnClickListener
-                }
-
-                val event = Event(
-                    eventID = generateEventId(),
-                    date = textDatePicker,
-                    title = binding.valueTitle.text.toString(),
-                    timeStart = binding.valueDateStart.text.toString(),
-                    timeEnd = binding.valueDateEnd.text.toString(),
-                    repeat = idRadio
-                )
-
-                if (idRadio == 0) {
-                    // Sự kiện đơn lẻ
-                    addSingleEvent(currentUserUid, event)
-                } else {
-                    // Sự kiện lặp lại
-                    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                    val dateStart = dateFormat.parse(event.date)
-                    val dateEnd = addYearsToDate(dateStart, 1)
-                    val endDateFormatted = dateFormat.format(dateEnd)
-                    val repeatModeClick = when(event.repeat){
-                        1->RepeatMode.Day
-                        2->RepeatMode.WorkDay
-                        3->RepeatMode.Week
-                        4->RepeatMode.Month
-                        else -> RepeatMode.Year
+            if(binding.btnSave.text == "Xác nhận"){
+                try {
+                    val currentUserUid = mAuth.currentUser?.uid
+                    if (currentUserUid == null) {
+                        showToast(requireContext(), "User is not logged in.")
+                        return@setOnClickListener
                     }
 
-                    addEventWithRepeats(currentUserUid, event, repeatModeClick, endDateFormatted)
-                }
+                    val event = Event(
+                        eventID = generateEventId(),
+                        date = textDatePicker,
+                        title = binding.valueTitle.text.toString(),
+                        timeStart = binding.valueDateStart.text.toString(),
+                        timeEnd = binding.valueDateEnd.text.toString(),
+                        repeat = idRadio
+                    )
+
+                    if (idRadio == 0) {
+                        // Sự kiện đơn lẻ
+                        addSingleEvent(currentUserUid, event)
+                    } else {
+                        // Sự kiện lặp lại
+                        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        val dateStart = dateFormat.parse(event.date)
+                        val dateEnd = addYearsToDate(dateStart, 1)
+                        val endDateFormatted = dateFormat.format(dateEnd)
+                        val repeatModeClick = when(event.repeat){
+                            1->RepeatMode.Day
+                            2->RepeatMode.WorkDay
+                            3->RepeatMode.Week
+                            4->RepeatMode.Month
+                            else -> RepeatMode.Year
+                        }
+
+                        addEventWithRepeats(currentUserUid, event, repeatModeClick, endDateFormatted)
+                    }
 //                deleteEvent("e0c6c8ef-f673-4d96-b4e8-01bb4aa3cfd0")
 
-            } catch (e: Exception) {
-                Log.e("EventFragment", "Error creating event", e)
+                } catch (e: Exception) {
+                    Log.e("EventFragment", "Error creating event", e)
+                }
             }
+            else {
+                val currentUserUid = mAuth.currentUser?.uid
+                val eventupdate = Event(
+                    eventID = eventDelete.eventID,
+                    date = if (textDatePicker.isNotEmpty()) textDatePicker else eventDelete.date,
+                    title = if (binding.valueTitle.text.toString().isNotEmpty()) binding.valueTitle.text.toString() else eventDelete.title,
+                    timeStart = if (binding.valueDateStart.text.toString().isNotEmpty()) binding.valueDateStart.text.toString() else eventDelete.timeStart,
+                    timeEnd = if (binding.valueDateEnd.text.toString().isNotEmpty()) binding.valueDateEnd.text.toString() else eventDelete.timeEnd,
+                    repeat = idRadio ,
+                    originalEventID =eventDelete.originalEventID
+                )
+                if(eventDelete.originalEventID.isEmpty()){
+                    if (idRadio == 0) {
+                        updateEvent(eventupdate)
+                    } else {
+                        // Sự kiện lặp lại
+                        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        val dateStart = dateFormat.parse(eventupdate.date)
+                        val dateEnd = addYearsToDate(dateStart, 1)
+                        val endDateFormatted = dateFormat.format(dateEnd)
+                        val repeatModeClick = when(eventupdate.repeat){
+                            1->RepeatMode.Day
+                            2->RepeatMode.WorkDay
+                            3->RepeatMode.Week
+                            4->RepeatMode.Month
+                            else -> RepeatMode.Year
+                        }
+
+                        addEventWithRepeats(currentUserUid!!, eventupdate, repeatModeClick, endDateFormatted)
+                    }
+                }else {
+
+                    // xu ly sua su kien co lap
+                    eventupdate?.let { event ->
+                        val dialog = UpdateEventModeFragment.newInstance(event, position)
+                        dialog.setTargetFragment(this, 0)
+                        dialog.show(parentFragmentManager, "UpdateEventModeFragment")
+                    }
+
+
+                }
+
+            }
+
 //            deleteEvent("779e81b9-e0a0-41e9-9cad-fd81c6e849ed")
 //            deleteAllRepeatingEvents("2055ddb4-c907-4c5b-b71a-c496b8edc4a8")
 //            deleteFutureRepeatingEvents("5197007d-1143-4182-aae0-5fdbcaf07483")
@@ -223,6 +270,17 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
             // Gửi kết quả lại cho MonthFragment
                 setFragmentResult("requestKey", Bundle().apply {
                 putInt("position", position)
+                Log.d("ktraa", position.toString() + " EventModeFragment")
+            })
+            dismiss()
+        }
+        setFragmentResultListener("requestKey1") { requestKey, bundle ->
+            val position = bundle.getInt("position")
+            val event : Event = bundle.getParcelable("event")!!
+            // Gửi kết quả lại cho MonthFragment
+            setFragmentResult("requestUpdate", Bundle().apply {
+                putInt("position", position)
+                putParcelable("event", event)
                 Log.d("ktraa", position.toString() + " EventModeFragment")
             })
             dismiss()
@@ -302,8 +360,10 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                     .update("eventID", FieldValue.arrayRemove(eventId))
                     .addOnSuccessListener {
                         showToast(requireContext(), "Event deleted and user updated successfully")
-                        setFragmentResult("event_update", Bundle().apply {
-                            putString("deleted_event_id", eventId)
+                        // Gửi kết quả lại cho MonthFragment mặc định c
+                        setFragmentResult("requestKey", Bundle().apply {
+                            putInt("position", position)
+                            Log.d("ktraa", position.toString() + " Event delete 1 đứa")
                         })
                         dismiss()
                     }
@@ -315,6 +375,40 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                 showToast(requireContext(), "Error deleting event: $e")
             }
     }
+    private fun updateEvent(event: Event) {
+        val currentUserUid = mAuth.currentUser?.uid
+        if (currentUserUid == null) {
+            showToast(requireContext(), "User is not logged in.")
+            return
+        }
+
+        val eventId = event.eventID
+
+        mFirestore.collection("Events").document(eventId)
+            .set(event)
+            .addOnSuccessListener {
+                mFirestore.collection("User").document(currentUserUid)
+                    .update("eventID", FieldValue.arrayUnion(eventId))
+                    .addOnSuccessListener {
+                        showToast(requireContext(), "Event updated and user updated successfully")
+                        // Gửi kết quả lại cho MonthFragment
+                        setFragmentResult("requestKey1", Bundle().apply {
+                            putInt("position", position)
+                            putParcelable("event", event)
+
+                            Log.d("ktraa", position.toString() + " Event updated")
+                        })
+                        dismiss()
+                    }
+                    .addOnFailureListener { e ->
+                        showToast(requireContext(), "Error updating user: $e")
+                    }
+            }
+            .addOnFailureListener { e ->
+                showToast(requireContext(), "Error updating event: $e")
+            }
+    }
+
     // xoa tat ca lich trinh lap giu lai lich trinh goc
     fun deleteAllRepeatingEvents(originalEventID: String) {
         val db = FirebaseFirestore.getInstance()

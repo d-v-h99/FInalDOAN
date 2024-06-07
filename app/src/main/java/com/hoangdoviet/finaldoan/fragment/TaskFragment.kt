@@ -171,10 +171,10 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
     private fun loadTasksByDate(date: String) {
         val db = FirebaseFirestore.getInstance()
         val tasksByDateRef = db.collection("TasksByDate").document(date)
-
+        tasks.clear()
         tasksByDateRef.get()
             .addOnSuccessListener { document ->
-                tasks.clear() // Xóa các nhiệm vụ hiện tại trước khi thêm mới
+               // Xóa các nhiệm vụ hiện tại trước khi thêm mới
                 if (document != null && document.exists()) {
                     val taskIds = document.get("taskIds") as? List<String> ?: emptyList()
                     if (taskIds.isEmpty()) {
@@ -481,6 +481,7 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         }
 
         binding.textDateMonth.text = ddMmYy
+        tasks.clear()
         updateOverdueTasks()
         loadTasksByDate(ddMmYy)
        // countTasksByDate(ddMmYy)

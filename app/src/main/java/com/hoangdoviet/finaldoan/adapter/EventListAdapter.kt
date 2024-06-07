@@ -42,6 +42,12 @@ class EventListAdapter(
         notifyItemRemoved(position)
         notifyItemRangeChanged(position, events.size)
     }
+    fun updateEventAt(position: Int, updatedEvent: Event) {
+        if (position >= 0 && position < events.size) {
+            events[position] = updatedEvent
+            notifyItemChanged(position)
+        }
+    }
 
 
     interface EventClickListener {

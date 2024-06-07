@@ -115,13 +115,13 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
         //
         eventListAdapter = EventListAdapter(mutableListOf(), this)
         // Đặt listener sau khi view đã được tạo ra
-        parentFragmentManager.setFragmentResultListener("requestKey", viewLifecycleOwner) { requestKey, bundle ->
-            val position = bundle.getInt("position")
-            // Xóa sự kiện đã xóa khỏi danh sách và thông báo cho adapter
-            events.removeAt(position)
-            eventListAdapter.notifyItemRemoved(position)
-            Log.d("ktraa", position.toString() + " MonthFragment")
-        }
+//        parentFragmentManager.setFragmentResultListener("requestKey", viewLifecycleOwner) { requestKey, bundle ->
+//            val position = bundle.getInt("position")
+//            // Xóa sự kiện đã xóa khỏi danh sách và thông báo cho adapter
+//            events.removeAt(position)
+//            eventListAdapter.notifyItemRemoved(position)
+//            Log.d("ktraa", position.toString() + " MonthFragment")
+//        }
         if (mAuth.currentUser != null) {
         fetchAllEvents() }
         binding.more.setOnClickListener {
@@ -132,6 +132,16 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             // Gửi kết quả lại cho MonthFragment
             Log.d("ktraa", position.toString() + " MonthFragment")
             eventListAdapter.removeEventAt(position)
+
+
+        }
+        childFragmentManager.setFragmentResultListener("requestUpdate",viewLifecycleOwner){requestKey, bundle ->
+            val position = bundle.getInt("position")
+           val eventUpdate : Event? = bundle.getParcelable("event")
+            Log.d("ktraa", position.toString() + " MonthFragment")
+            if (eventUpdate != null) {
+                eventListAdapter.updateEventAt(position, eventUpdate)
+            }
 
 
         }

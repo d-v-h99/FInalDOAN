@@ -123,6 +123,10 @@ class DeleteEventModeFragment : DialogFragment() {
                 batch.commit().addOnSuccessListener {
                     showToast(requireContext(), getString(R.string.repeating_events_deleted))
                     dismiss()
+                    setFragmentResult("deleteRequestKey", Bundle().apply {
+                        putInt("position", position)
+                        Log.d("ktraa", position.toString() + " deleteEventModeFragment")
+                    })
                 }.addOnFailureListener { e ->
                     showToast(requireContext(), getString(R.string.error_deleting_repeating_events, e.message))
                 }

@@ -19,6 +19,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hoangdoviet.finaldoan.databinding.ActivityMainBinding
 import com.hoangdoviet.finaldoan.fragment.DayFragment
 import com.hoangdoviet.finaldoan.fragment.EventFragment
+import com.hoangdoviet.finaldoan.fragment.FormTaskFragment
 import com.hoangdoviet.finaldoan.fragment.MonthFragment
 import com.hoangdoviet.finaldoan.fragment.RepeatModeFragment
 import com.hoangdoviet.finaldoan.fragment.TaskFragment
@@ -72,10 +73,16 @@ class MainActivity : AppCompatActivity() {
         }
 //        val btnDelete= dialog.findViewById<RelativeLayout>(R.id.rl_task)
 //        val btnAdd= dialog.findViewById<RelativeLayout>(R.id.rl_event)
-        dialog.findViewById<RelativeLayout>(R.id.rl_event)?.setOnClickListener {
+        dialog.findViewById<RelativeLayout>(R.id.rl_task)?.setOnClickListener {
             val eventFragment = EventFragment()
             eventFragment.show(supportFragmentManager, "EventFragment")
             dialog.dismiss()
+        }
+        dialog.findViewById<RelativeLayout>(R.id.rl_event)?.setOnClickListener {
+            val formTask = FormTaskFragment()
+            formTask.show(supportFragmentManager, "EventFragment")
+            dialog.dismiss()
+
         }
 
         dialog.show()

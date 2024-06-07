@@ -101,7 +101,7 @@
                 android:progressDrawable="@drawable/background_process_bar"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:progress="70"
+                android:progress="0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -109,7 +109,7 @@
                 android:id="@+id/tvScore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="33%"
+                android:text="0%"
                 android:textColor="@color/black"
                 android:textSize="22sp"
                 app:layout_constraintBottom_toBottomOf="@+id/scoreProgressBar"
@@ -139,7 +139,7 @@
                 android:layout_marginStart="84dp"
                 android:layout_marginTop="20dp"
                 android:layout_marginEnd="64dp"
-                android:text="3 nhiệm vụ"
+                android:text="0 nhiệm vụ"
                 android:textSize="20sp"
                 app:layout_constraintEnd_toStartOf="@+id/scoreProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
