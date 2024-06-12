@@ -77,7 +77,7 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         binding.recyclerView1.adapter = taskAdapter
 //        val todayDate = "20240605"
         updateOverdueTasks()
-        loadTasksByDate(todayDate)
+//        loadTasksByDate(todayDate)
       //  countTasksByDate(todayDate)
         countCompletedTasksByDate(todayDate)
 

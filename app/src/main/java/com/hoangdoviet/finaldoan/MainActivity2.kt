@@ -25,11 +25,17 @@ import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import com.hoangdoviet.finaldoan.adapter.MessageAdapter
 import com.hoangdoviet.finaldoan.databinding.ActivityMain2Binding
+import com.hoangdoviet.finaldoan.model.Event
 import com.hoangdoviet.finaldoan.model.Message
 import com.hoangdoviet.finaldoan.utils.Constants
+import com.hoangdoviet.finaldoan.utils.DateScheduler
 import com.hoangdoviet.finaldoan.utils.Time
+import com.hoangdoviet.finaldoan.utils.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +43,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.jsoup.Jsoup
@@ -49,14 +56,19 @@ import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
+import java.util.UUID
+import kotlin.coroutines.suspendCoroutine
 
 class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     lateinit var binding: ActivityMain2Binding
     lateinit var adapter: MessageAdapter
     lateinit var tts: TextToSpeech
     lateinit var speechRecognizer: SpeechRecognizer
-    lateinit var   titleArticle: String
+    lateinit var titleArticle: String
     lateinit var hashMap: HashMap<Int, Triple<String, String, String>>
     var messagesList = mutableListOf<Message>()
     val generativeModel = GenerativeModel(
@@ -65,6 +77,8 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         apiKey = "AIzaSyB0uf8m7jwu9AjNBL1Ri6g437qJX5Q1e_s"
         // ENTER YOUR KEY
     )
+    private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMain2Binding.inflate(layoutInflater)
@@ -78,7 +92,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
         //clickEvents()
         tts = TextToSpeech(this, this)
-        if (! Python.isStarted()) {
+        if (!Python.isStarted()) {
             Python.start(AndroidPlatform(this))
         }
         CoroutineScope(Dispatchers.Main).launch {
@@ -108,14 +122,27 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             startRecognition()
             KeyboardToSpeech()
         }
-        messagesList.add(Message("Chào bạn, Tôi có thể giúp gì cho bạn!", Constants.RECEIVE_ID, System.currentTimeMillis().toString()))
+        messagesList.add(
+            Message(
+                "Chào bạn, Tôi có thể giúp gì cho bạn!",
+                Constants.RECEIVE_ID,
+                System.currentTimeMillis().toString()
+            )
+        )
         //readCsvMessage()
-        adapter.insertMessage(Message("Chào bạn, Tôi có thể giúp gì cho bạn!", Constants.RECEIVE_ID, System.currentTimeMillis().toString()))
+        adapter.insertMessage(
+            Message(
+                "Chào bạn, Tôi có thể giúp gì cho bạn!",
+                Constants.RECEIVE_ID,
+                System.currentTimeMillis().toString()
+            )
+        )
 
         setUiRecognition()
 
 
     }
+
     private fun setUiRecognition() {
         // setup Speech Recognition
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
@@ -168,6 +195,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi")
         speechRecognizer.startListening(intent)
     }
+
     private fun finishRecognition() {
         binding.btnListen.setVisibility(View.VISIBLE)
         binding.btnKeyBoard.setVisibility(View.VISIBLE)
@@ -175,9 +203,11 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         binding.recognitionView!!.play()
         binding.recognitionView!!.visibility = View.GONE
     }
+
     private fun KeyboardToSpeech() {
         binding.layoutChatbox.setVisibility(View.INVISIBLE)
-        binding.layoutSpeech!!.visibility = View.VISIBLE // dấu !! kotlin => biến k thể NULL cho phép truy cập an toàn
+        binding.layoutSpeech!!.visibility =
+            View.VISIBLE // dấu !! kotlin => biến k thể NULL cho phép truy cập an toàn
         // tạo đối tượng params => dùng xđ kích thước layout_speech trong bố cục cha giả định là frameLayout
         val params = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, //Đặt chiều rộng của layout_speech để khớp với toàn bộ chiều rộng của bố cục cha của nó.
@@ -186,6 +216,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         params.setMargins(0, 0, 0, 410)
         closeKeyboard()
     }
+
     private fun writeCsvMessage() {
         val folder = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
@@ -205,7 +236,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         var data = ""
         for (m in messagesList) {
             data += (m.message + ";" + m.time + ";" + m.id
-            ) + "\n"
+                    ) + "\n"
         }
         Log.d("writeCsvMessage: ", data)
         var fw: FileWriter? = null
@@ -218,6 +249,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             e.printStackTrace()
         }
     }
+
     private fun readCsvMessage() {
         val folder = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
@@ -297,16 +329,17 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
-
     fun showKeyboard() {
         binding.edittextChatbox.requestFocus()
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(binding.edittextChatbox, InputMethodManager.SHOW_IMPLICIT)
     }
+
     fun closeKeyboard() {
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.edittextChatbox.getWindowToken(), 0)
     }
+
     private fun SpeechToKeyboard() {
         showKeyboard()
         finishRecognition()
@@ -319,6 +352,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         )
         params.setMargins(0, 0, 0, 140)
     }
+
     override fun onPause() {
         super.onPause()
         finishRecognition()
@@ -332,6 +366,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         speechRecognizer.destroy()
         tts.shutdown()
     }
+
     override fun onStart() {
         super.onStart()
         GlobalScope.launch {
@@ -341,6 +376,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
     }
+
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             val result = tts.setLanguage(Locale("vi", "VN"))
@@ -349,9 +385,11 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
     }
+
     private fun playNews(data: String) {
         tts.speak(data, TextToSpeech.QUEUE_FLUSH, null, "")
     }
+
     private fun sendMessage(text: String) {
         //val message = binding.etMessage.text.toString()
         val message = text
@@ -375,71 +413,80 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         val scope = CoroutineScope(Dispatchers.Main)
         GlobalScope.launch {
             var responseText = ""
-            var ArticleText=""
+            var ArticleText = ""
             withContext(Dispatchers.Main) {
 
-                when  {
-                    message.toLowerCase().contains("đọc báo")-> {
+                when {
+                    message.toLowerCase().contains("đọc báo") -> {
                         responseText = titleArticle
 
                     }
+
                     message.toLowerCase().contains("tin số 1")
-                     -> {
-                      var text = hashMap[1]?.third.toString()+"\n"
+                    -> {
+                        var text = hashMap[1]?.third.toString() + "\n"
                         val link = hashMap[1]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
-                        responseText= text
+                        responseText = text
                         ArticleText = hashMap[1]?.second.toString()
                     }
-                   message.toLowerCase().contains( "tin số 2") -> {
-                        var text = hashMap[2]?.third.toString()+"\n"
+
+                    message.toLowerCase().contains("tin số 2") -> {
+                        var text = hashMap[2]?.third.toString() + "\n"
                         val link = hashMap[2]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
-                        responseText= text
+                        responseText = text
                         ArticleText = hashMap[2]?.second.toString()
                     }
+
                     message.toLowerCase().contains("tin số 3") -> {
-                        var text = hashMap[3]?.third.toString()+"\n"
+                        var text = hashMap[3]?.third.toString() + "\n"
                         val link = hashMap[3]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
-                        responseText= text
+                        responseText = text
                         ArticleText = hashMap[3]?.second.toString()
                     }
+
                     message.toLowerCase().contains("tin số 4") -> {
-                        var text = hashMap[4]?.third.toString()+"\n"
+                        var text = hashMap[4]?.third.toString() + "\n"
                         val link = hashMap[4]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
-                        responseText= text
+                        responseText = text
                         ArticleText = hashMap[4]?.second.toString()
                     }
+
                     message.toLowerCase().contains("tin số 5") -> {
-                        var text = hashMap[5]?.third.toString()+"\n"
+                        var text = hashMap[5]?.third.toString() + "\n"
                         val link = hashMap[5]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
-                        responseText= text
+                        responseText = text
                         ArticleText = hashMap[5]?.second.toString()
                     }
+
                     message.toLowerCase().contains("tin số 6") -> {
-                        var text = hashMap[6]?.third.toString()+"\n"
+                        var text = hashMap[6]?.third.toString() + "\n"
                         val link = hashMap[6]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
-                        responseText= text
+                        responseText = text
                         ArticleText = hashMap[6]?.second.toString()
                     }
+
                     message.toLowerCase().contains("tin số 7") -> {
-                        var text = hashMap[7]?.third.toString()+"\n"
+                        var text = hashMap[7]?.third.toString() + "\n"
                         val link = hashMap[7]?.first.toString()
                         text += "Nhấn vào đường link để đọc chi tiết:\n $link"
-                        responseText= text
+                        responseText = text
                         ArticleText = hashMap[7]?.second.toString()
                     }
-                    message.toLowerCase().contains("báo thức") ->{
+
+                    message.toLowerCase().contains("báo thức") -> {
                         responseText = "Đặt báo thức thành công"
                         scope.launch {
                             delay(1500)
                             alarm(message)
                         }
                     }
+
                     message.toLowerCase().contains("đếm ngược") -> {
                         responseText = "Đặt đếm ngược  thành công"
                         scope.launch {
@@ -447,6 +494,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                             getTimeInSeconds(message)
                         }
                     }
+
                     message.toLowerCase().contains("gọi taxi") -> {
                         responseText = "Đang gọi taxi G7"
                         scope.launch {
@@ -454,7 +502,8 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                             callTaxi()
                         }
                     }
-                    message.toLowerCase().contains("tìm kiếm") ->{
+
+                    message.toLowerCase().contains("tìm kiếm") -> {
                         responseText = "Tôi sẽ mở google"
                         val startIndex = message.indexOf("Tìm kiếm thông tin về")
                         if (startIndex != -1) {
@@ -466,16 +515,101 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                         }
 
                     }
+
                     message.toLowerCase().contains("giá vàngxx") -> {
                         responseText =
                             getGiaVangFromURLAsync("https://ngoctham.com/bang-gia-vang/").await()
                     }
+
                     message.toLowerCase().contains("giá xăng") -> {
                         responseText =
                             getGiaXangFromUrlAsync("https://vnexpress.net/chu-de/gia-xang-dau-3026").await()
                     }
-                    message.toLowerCase().contains("xổ số") -> {
-                        responseText = getXoSoFromUrlAsync("https://api-xsmb.cyclic.app/api/v1").await()
+
+//                    message.toLowerCase().contains("xổ số") -> {
+//                        responseText =
+//                            getXoSoFromUrlAsync("https://api-xsmb.cyclic.app/api/v1").await()
+//                    }
+                    message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("âm lịch")||
+                            message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("ngày rằm")-> {
+                        val Date = DateScheduler.extractLunarDate(message)
+                        val time = DateScheduler.findTimeReferences(message)
+                        val content = DateScheduler.getStringAfterKeyword(message)
+                        try {
+                            responseText = time +"\n"+content+"\n"+Date
+                            if(time.isNullOrEmpty()) responseText = "Bạn cần thêm thêm các từ chỉ thời gian để đặt lịch như 5 giờ sáng , 5 giờ chiều , hoặc mốc thời gian cụ thể như 10:45\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 GIỜ SÁNG với nội dung đi học toán"
+                            else if (content.isNullOrEmpty())   responseText = "Bạn cần thêm thêm từ nội dung để đặt lịch\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 giờ sáng với NỘI DUNG đi học toán"
+                            else if (Date.isNullOrEmpty()) responseText = "Không thể xác định các từ thời gian. Thử lại"
+                            else if (Date.contains("Không")) responseText = "Không xác định được ngày âm lịch"
+                            else{
+                                val currentUserUid = mAuth.currentUser?.uid!!
+                                val event = Event(
+                                    eventID = generateEventId(),
+                                    date = convertDateString(Date),
+                                    title = content,
+                                    timeStart = time,
+                                    timeEnd =addOneHourToTime(time) ,
+                                    repeat = 0
+                                )
+                                responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
+                                addSingleEvent(currentUserUid, event)
+
+                            }
+                        }catch (e: Exception){
+                            responseText = "Lỗi "+e
+                            Log.d("loii",e.toString())
+                        }
+                    }
+                    message.toLowerCase().contains("đặt lịch") -> {
+                        val time = DateScheduler.findTimeReferences(message)
+                        val content = DateScheduler.getStringAfterKeyword(message)
+                        val listWordDate = DateScheduler.extractTemporalWords(message)
+                        val Date = DateScheduler.checktime(listWordDate)
+                        try {
+                            responseText = time +"\n"+content+"\n"+Date
+                            if(time.isNullOrEmpty()) responseText = "Bạn cần thêm thêm các từ chỉ thời gian để đặt lịch như 5 giờ sáng , 5 giờ chiều , hoặc mốc thời gian cụ thể như 10:45\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 GIỜ SÁNG với nội dung đi học toán"
+                            else if (content.isNullOrEmpty())   responseText = "Bạn cần thêm thêm từ nội dung để đặt lịch\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 giờ sáng với NỘI DUNG đi học toán"
+                            else if(listWordDate.isEmpty())  responseText = "Bạn cần thêm thêm các từ chỉ ngày để xác định ngày đặt lịch ví dụ hôm nay , ngày mai, thứ hai tuần sau \n Ví dụ đặt lịch cho tôi NGÀY MAI lúc 10 giờ sáng với nội dung đi học toán"
+                            else if (Date.isNullOrEmpty()) responseText = "Không thể xác định các từ thời gian. Thử lại"
+                            else if (Date.contains("Lỗi vì ngày")) responseText = "Thời gian đặt lịch đã quá hạn, Vui lòng nói thời gian hợp lệ"
+                            else{
+                                val currentUserUid = mAuth.currentUser?.uid!!
+                                val event = Event(
+                                    eventID = generateEventId(),
+                                    date = convertDateString(Date),
+                                    title = content,
+                                    timeStart = time,
+                                    timeEnd =addOneHourToTime(time) ,
+                                    repeat = 0
+                                )
+                                responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
+                                addSingleEvent(currentUserUid, event)
+
+                            }
+
+                        }catch (e: Exception){
+                            responseText = "Lỗi "+e
+                        }
+                    }
+                    message.toLowerCase().contains("hôm nay") && message.toLowerCase().contains("sự kiện") -> {
+                        val currentUserUid = mAuth.currentUser?.uid!!
+                        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        val todayDate = dateFormat.format(Date())
+
+                        val events = withContext(Dispatchers.IO) {
+                            getEventsByUserAndDate(currentUserUid, todayDate)
+                        }
+
+                        responseText = if (events.isNotEmpty()) {
+                            events.joinToString(separator = "\n") { event ->
+                                "${event.title}: ${event.timeStart} - ${event.timeEnd}"
+                            }
+                        } else {
+                            "Hôm nay không có sự kiện"
+                        }
+                    }
+                    message.toLowerCase().contains("kiểm tra") -> {
+                        responseText = DateScheduler.extractLunarDate(message)
                     }
                     else -> {
                         val response = generativeModel.generateContent(message)
@@ -489,9 +623,9 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 //
                 adapter.insertMessage(Message(responseText, Constants.RECEIVE_ID, timeStamp))
                 binding.reyclerviewMessageList.scrollToPosition(adapter.itemCount - 1)
-                if(ArticleText.isNotEmpty()){
+                if (ArticleText.isNotEmpty()) {
                     playNews(ArticleText)
-                }else {
+                } else {
                     playNews(responseText)
                 }
 //Thread { writeCsvMessage() }.start()
@@ -500,6 +634,51 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
     }
+    suspend fun getEventsByUserAndDate(userId: String, date: String): List<Event> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val db = FirebaseFirestore.getInstance()
+                val userRef = db.collection("User").document(userId)
+
+                val userDocument = userRef.get().await()
+                val eventIds = userDocument.get("eventID") as? List<String> ?: emptyList()
+
+                val eventsRef = db.collection("Events")
+                val eventsSnapshot = eventsRef.whereIn("eventID", eventIds)
+                    .whereEqualTo("date", date)
+                    .get()
+                    .await()
+
+                eventsSnapshot.toObjects(Event::class.java)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
+            }
+        }
+    }
+    fun convertDateString(inputDate: String): String {
+        // Định dạng đầu vào
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        // Định dạng đầu ra
+        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+        // Phân tích chuỗi đầu vào thành đối tượng Date
+        val date = inputFormat.parse(inputDate)
+        // Định dạng lại đối tượng Date thành chuỗi theo định dạng đầu ra
+        return outputFormat.format(date)
+    }
+    fun addOneHourToTime(time: String): String {
+        val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val date = dateFormat.parse(time)
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        calendar.add(Calendar.HOUR_OF_DAY, 1)
+        return dateFormat.format(calendar.time)
+    }
+    fun generateEventId(): String {
+        return UUID.randomUUID().toString()
+    }
+
     private suspend fun callGetArticle(url: String) {
         // Khởi tạo một coroutine scope
         titleArticle = "Hôm nay có các tin tức sau\n"
@@ -511,13 +690,17 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         // Xử lý kết quả trả về từ hàm getArticle trên luồng chính
         for ((key, value) in hashMap) {
-            Log.d("hashMap", "Khóa: $key, Giá trị: (${value.first}, ${value.second}, TIEU DE ${value.third})")
+            Log.d(
+                "hashMap",
+                "Khóa: $key, Giá trị: (${value.first}, ${value.second}, TIEU DE ${value.third})"
+            )
             titleArticle += "Tin số $key ${value.third}\n"
         }
         titleArticle += "Bạn muốn đọc tin số mấy?"
         // Cập nhật giao diện hoặc thực hiện các tác vụ khác trên luồng chính nếu cần
         Log.d("hashMap", titleArticle)
     }
+
     private suspend fun getArticle(url: String): HashMap<Int, Triple<String, String, String>> {
         val hashMap = HashMap<Int, Triple<String, String, String>>()
         try {
@@ -546,7 +729,11 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }
             }
             uniqueLinks.forEachIndexed { index, link ->
-                hashMap[index + 1] = Triple(link.toString(), face?.call(link).toString(), faceTitle?.call(link).toString())
+                hashMap[index + 1] = Triple(
+                    link.toString(),
+                    face?.call(link).toString(),
+                    faceTitle?.call(link).toString()
+                )
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -587,6 +774,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
     }
+
     private fun getGiaXangFromUrlAsync(url: String): Deferred<String> {
         return GlobalScope.async {
             try {
@@ -632,16 +820,17 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                     break // Chỉ xử lý bảng đầu tiên (bạn có thể xử lý tất cả các bảng nếu cần)
                 }
                 return@async message
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
                 return@async "Có lỗi xảy ra khi truy cập thông tin giá xăng."
             }
         }
     }
-    private fun getXoSoFromUrlAsync(url: String) : Deferred<String> {
+
+    private fun getXoSoFromUrlAsync(url: String): Deferred<String> {
         return GlobalScope.async {
             try {
-                var content ="Không có thông tin"
+                var content = "Không có thông tin"
                 // Gửi yêu cầu GET đến API và lấy dữ liệu JSON trả về
                 val jsonResponse = URL(url).readText()
 
@@ -689,25 +878,51 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 for (i in 0 until g7Array.length()) {
                     g7List.add(g7Array.getString(i))
                 }
-                content=""
-                content+="Thời gian: $time\nGiải đặc biệt: $gdb\nGiải nhất: $g1\nGiải nhì:  ${g2List.joinToString(separator = ", ")}\n"
+                content = ""
+                content += "Thời gian: $time\nGiải đặc biệt: $gdb\nGiải nhất: $g1\nGiải nhì:  ${
+                    g2List.joinToString(
+                        separator = ", "
+                    )
+                }\n"
                 // In ra các giá trị đã lấy được
-                Log.d("checkkk","Thời gian: $time")
+                Log.d("checkkk", "Thời gian: $time")
                 println("ĐB: $gdb")
                 println("G1: $g1")
-                Log.d("checkkk","G2: ${g2List.joinToString(separator = ", ")}")
+                Log.d("checkkk", "G2: ${g2List.joinToString(separator = ", ")}")
                 println("G3: ${g3List.joinToString(separator = ", ")}")
                 println("G4: ${g4List.joinToString(separator = ", ")}")
                 println("G5: ${g5List.joinToString(separator = ", ")}")
                 println("G6: ${g6List.joinToString(separator = ", ")}")
                 println("G7: ${g7List.joinToString(separator = ", ")}")
                 return@async content
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
                 return@async "Có lỗi xảy ra khi truy cập thông tin XSMB."
             }
         }
     }
+    fun addSingleEvent(userId: String, event: Event)  {
+        val db = FirebaseFirestore.getInstance()
+        val eventRef = db.collection("Events").document(event.eventID)
+
+        eventRef.set(event)
+            .addOnSuccessListener {
+                // Thêm eventId vào danh sách eventID của người dùng
+                db.collection("User").document(userId)
+                    .update("eventID", FieldValue.arrayUnion(event.eventID))
+                    .addOnSuccessListener {
+                        showToast(this, "Event added and user updated successfully")
+
+                    }
+                    .addOnFailureListener { e ->
+                        showToast(this, "Error updating user: $e")
+                    }
+            }
+            .addOnFailureListener { e ->
+                showToast(this, "Error adding event: $e")
+            }
+    }
+
     private fun alarm(text: String) {
         if (text.contains(":")) {
             val ls = text.split(" ")
@@ -715,12 +930,12 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             val hour = lstemp[0].toInt()
             val minutes = lstemp[1].toInt()
 
-            createAlarm( hour, minutes)
+            createAlarm(hour, minutes)
         } else {
             val ls = text.split(" ")
             val hour = ls[ls.size - 2].toInt()
             val minutes = 0
-            createAlarm( hour, minutes)
+            createAlarm(hour, minutes)
         }
     }
 
@@ -734,17 +949,20 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
     }
+
     private fun callTaxi() {
         val phoneTaxi = "024323232"
         val intent = Intent(Intent.ACTION_CALL)
         intent.data = Uri.parse("tel:$phoneTaxi")
         startActivity(intent)
     }
+
     private fun search_google(key: String) {
         val intent = Intent(Intent.ACTION_WEB_SEARCH)
         intent.putExtra(SearchManager.QUERY, key)
         startActivity(intent)
     }
+
     fun getTimeInSeconds(text: String): Any {
         val arr = text.split(" ")
         val unit = arr.find { it in setOf("giây", "phút", "giờ") }
@@ -764,10 +982,12 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             .putExtra(AlarmClock.EXTRA_LENGTH, seconds)
         startActivity(intent)
     }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_item_chatbot, menu)
         return super.onCreateOptionsMenu(menu)
     }
+
     private val voice1: Voice = Voice(
         "vi-vn-x-vif-network", // giong nam mien nam
         Locale("vi", "VN"),
@@ -826,7 +1046,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         when (item.itemId) {
 
 
-
             R.id.speed_075x -> {
                 tts.stop()
                 tts.setSpeechRate(0.75F)
@@ -856,10 +1075,12 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 tts.stop() // giong nu - niem Bac
                 tts.voice = addedVoices.elementAt(1)
             }
+
             R.id.voice3 -> {
                 tts.stop() // giọng nữ - miền Nam
                 tts.voice = addedVoices.elementAt(2)
             }
+
             R.id.voice5 -> {
                 tts.stop()// giong nam - mien bac
                 tts.voice = addedVoices.elementAt(4)

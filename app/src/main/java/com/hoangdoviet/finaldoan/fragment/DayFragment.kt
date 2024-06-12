@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.viewpager.widget.ViewPager
 import androidx.viewpager2.widget.ViewPager2
 import com.hoangdoviet.finaldoan.R
@@ -15,6 +16,7 @@ import com.hoangdoviet.finaldoan.databinding.FragmentDayBinding
 import com.hoangdoviet.finaldoan.model.LunarCalendar
 import com.hoangdoviet.finaldoan.model.ThoiGianConVat
 import com.hoangdoviet.finaldoan.utils.DateManager
+import com.hoangdoviet.finaldoan.utils.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -98,6 +100,7 @@ class DayFragment : Fragment() {
         m = jsonObject.getString("lunarMonth").toInt()
         fixMonthLunar = m
         y = jsonObject.getString("lunarYear").toInt()
+        Log.d("checkamlich", d.toString() +" - "+ m.toString()+" - "+y.toString())
         thangconvat = thoiGianConVat.getThangConVat(m, y)
         binding.ngayAmLichInOneDay.text = "Ngày\n$d\n$ngayConVat"
         binding.thangAmLichInOneDay.text = "Tháng\n$m\n$thangconvat"
@@ -125,7 +128,7 @@ class DayFragment : Fragment() {
                 d = jsonObject.getString("lunarDay").toInt()
                 m = jsonObject.getString("lunarMonth").toInt()
                 y = jsonObject.getString("lunarYear").toInt()
-
+                Log.d("checkamlich", d.toString() +" - "+ m.toString()+" - "+y.toString())
                 thangconvat = thoiGianConVat.getThangConVat(m, y) //m, y lunar
 
                 binding.ngayAmLichInOneDay.text = "Ngày\n$d\n$ngayConVat"

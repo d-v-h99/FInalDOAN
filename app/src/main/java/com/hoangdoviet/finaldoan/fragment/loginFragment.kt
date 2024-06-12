@@ -60,6 +60,7 @@ class loginFragment : Fragment() {
                         putExtra("loginUiState", currentUser)
                     }
                     startActivity(intent)
+
                 }
                 Status.ERROR -> {
                     showToast(requireContext(), loginState.message.toString())

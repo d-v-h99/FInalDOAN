@@ -51,6 +51,7 @@ class AuthViewModel : ViewModel() {
                     .document(currentUserUid)
                 val currentUser: DocumentSnapshot = currentUserRef.get().await()
                 val currentUserInfoExist = currentUser.exists()
+                // Lấy giá trị isAdmin từ tài liệu người dùng trong Firestore
                 val loginUiState = LoginUiState(
                     username = currentUsername,
                     email = email,

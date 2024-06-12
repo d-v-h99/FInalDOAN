@@ -12,9 +12,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.tasks.Tasks
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.adapter.EventListAdapter
 import com.hoangdoviet.finaldoan.adapter.HolidaysAdapter
@@ -194,19 +196,58 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
 
 
     private fun fetchEventsForDate(date: String) {
-        eventsRef.whereEqualTo("date", date).get()
-            .addOnSuccessListener { documents ->
-                val events = documents.toObjects(Event::class.java)
-                if (events.isNotEmpty()) {
-                    showEventsBottomSheet(events)
-                } else {
-                    Toast.makeText(context, "No events for this date", Toast.LENGTH_SHORT).show()
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+        if (currentUserUid == null) {
+            Toast.makeText(context, "User is not logged in.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val userRef = FirebaseFirestore.getInstance().collection("User").document(currentUserUid)
+
+        userRef.get().addOnSuccessListener { userDocument ->
+            if (userDocument.exists()) {
+                val eventIDs = userDocument.get("eventID") as? List<String> ?: emptyList()
+                if (eventIDs.isEmpty()) {
+                    Toast.makeText(context, "No events for this user.", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
                 }
+
+                val eventsRef = FirebaseFirestore.getInstance().collection("Events")
+                val partitionedEventIDs = eventIDs.chunked(15)
+
+                val tasks = partitionedEventIDs.map { part ->
+                    eventsRef.whereIn("eventID", part).whereEqualTo("date", date).get()
+                }
+
+                Tasks.whenAllComplete(tasks).addOnSuccessListener { taskResults ->
+                    val events = mutableListOf<Event>()
+                    for (taskResult in taskResults) {
+                        if (taskResult.isSuccessful) {
+                            val documents = (taskResult.result as QuerySnapshot).documents
+                            events.addAll(documents.map { it.toObject(Event::class.java)!! })
+                        } else {
+                            Log.d("Error", "Error fetching events: ${taskResult.exception}")
+                        }
+                    }
+
+                    if (events.isNotEmpty()) {
+                        showEventsBottomSheet(events)
+                    } else {
+                        Toast.makeText(context, "No events for this date", Toast.LENGTH_SHORT).show()
+                    }
+                }.addOnFailureListener { e ->
+                    Toast.makeText(context, "Error fetching events: $e", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(context, "User data not found.", Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Error fetching events: $e", Toast.LENGTH_SHORT).show()
-            }
+        }.addOnFailureListener { e ->
+            Toast.makeText(context, "Error fetching user data: $e", Toast.LENGTH_SHORT).show()
+        }
     }
+
+
+
 
     private fun showEventsBottomSheet(events: List<Event>) {
         val dialog = BottomSheetDialog(requireContext())
