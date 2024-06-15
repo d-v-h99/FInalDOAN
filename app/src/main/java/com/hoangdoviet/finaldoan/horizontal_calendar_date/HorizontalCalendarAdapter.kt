@@ -2,6 +2,9 @@ package com.hoangdoviet.finaldoan.horizontal_calendar_date
 
 import android.annotation.SuppressLint
 import android.os.Build
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,11 +40,20 @@ class HorizontalCalendarAdapter(
         return CalendarViewHolder(view)
     }
 
-//    @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: CalendarViewHolder, @SuppressLint("RecyclerView") position: Int) {
         val itemList = list[position]
         holder.calendarDay.text = itemList.calendarDay
         holder.calendarDate.text = itemList.calendarDate
+
+        // Add red dot if the day has an event
+        if (itemList.hasEvent) {
+            val spannableString = SpannableString("${itemList.calendarDate} \u25CF") // Unicode for a filled circle
+            val dotSpan = ForegroundColorSpan(ContextCompat.getColor(holder.itemView.context, R.color.color3))
+            spannableString.setSpan(dotSpan, spannableString.length - 1, spannableString.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            holder.calendarDate.text = spannableString
+        } else {
+            holder.calendarDate.text = itemList.calendarDate
+        }
 
         holder.itemView.setOnClickListener {
             adapterPosition = position
@@ -90,5 +102,11 @@ class HorizontalCalendarAdapter(
             mListener?.onItemClick(text, date, day)
             onCalendarDateSelected.invoke(itemList, position)
         }
+    }
+
+    fun setData(calendarList: ArrayList<CalendarDateModel>, taskDates: List<String>) {
+        list.clear()
+        list.addAll(calendarList)
+        notifyDataSetChanged()
     }
 }

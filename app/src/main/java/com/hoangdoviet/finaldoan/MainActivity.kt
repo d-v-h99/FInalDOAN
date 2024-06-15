@@ -58,6 +58,15 @@ class MainActivity : AppCompatActivity() {
            supportFragmentManager.beginTransaction().add(R.id.frame_layout, profileFragment).commit()
 
        }
+        // Kiểm tra Intent để mở MonthFragment và truyền dữ liệu
+        intent?.let {
+            val targetFragment = it.getStringExtra("TARGET_FRAGMENT")
+            val eventDate = it.getStringExtra("EVENT_DATE")
+
+            if (targetFragment == "MonthFragment" && eventDate != null) {
+                replaceFragment(MonthFragment())
+            }
+        }
 
     }
 

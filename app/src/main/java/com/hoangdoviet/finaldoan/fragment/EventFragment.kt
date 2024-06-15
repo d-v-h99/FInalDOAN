@@ -1,7 +1,13 @@
 package com.hoangdoviet.finaldoan.fragment
 
+import android.app.AlarmManager
 import android.app.Dialog
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -20,6 +26,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.hoangdoviet.finaldoan.AlarmReceiver
+import com.hoangdoviet.finaldoan.MainActivity
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.databinding.FragmentEventBinding
 import com.hoangdoviet.finaldoan.databinding.FragmentOneDayBinding
@@ -28,6 +36,7 @@ import com.hoangdoviet.finaldoan.utils.RepeatMode
 import com.hoangdoviet.finaldoan.utils.addYearsToDate
 import com.hoangdoviet.finaldoan.utils.showToast
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
@@ -127,6 +136,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        checkAndRequestExactAlarmPermission()
         arguments?.getParcelable<Event>("event")?.let { event ->
             populateEventDetails(event)
             eventDelete = event
@@ -289,7 +299,54 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
 
 
     }
-//    private fun showDeleteEventDialog(event: Event) {
+    private fun checkAndRequestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = context?.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                startActivity(intent)
+            }
+        }
+    }
+    private fun setAlarm(event: Event) {
+        // Kiểm tra và yêu cầu quyền SCHEDULE_EXACT_ALARM
+        checkAndRequestExactAlarmPermission()
+
+        val alarmManager = context?.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        // Tạo Intent để truyền thông tin sự kiện cho AlarmReceiver
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra("EVENT_TITLE", event.title)
+            putExtra("EVENT_DATE", event.date)
+        }
+        // Tạo Intent để mở MainActivity và truyền dữ liệu
+        val intent1 = Intent(context, MainActivity::class.java).apply {
+            putExtra("EVENT_DATE", event.date)
+            putExtra("TARGET_FRAGMENT", "MonthFragment")
+        }
+
+
+        // Tạo PendingIntent
+        val pendingIntent = PendingIntent.getBroadcast(context, event.eventID.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        // Thiết lập thời gian thông báo
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        val dateTime = "${event.date} ${event.timeStart}"
+        val eventTime = dateFormat.parse(dateTime)
+
+        eventTime?.let {
+            val calendar = Calendar.getInstance().apply {
+                time = it
+                add(Calendar.MINUTE, -15) // Trừ đi 15 phút
+            }
+
+            // Đặt thông báo
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        }
+    }
+
+
+    //    private fun showDeleteEventDialog(event: Event) {
 //        val dialog = DeleteEventModeFragment.newInstance(event)
 //        dialog.setTargetFragment(this, 0)
 //        dialog.show(parentFragmentManager, "DeleteEventModeFragment")
@@ -338,6 +395,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                     .update("eventID", FieldValue.arrayUnion(event.eventID))
                     .addOnSuccessListener {
                         showToast(requireContext(), "Event added and user updated successfully")
+                        setAlarm(event) // Thiết lập thông báo cho sự kiện mớ
                         dismiss() // Chỉ đóng giao diện khi lưu thành công
                     }
                     .addOnFailureListener { e ->
@@ -391,6 +449,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                     .update("eventID", FieldValue.arrayUnion(eventId))
                     .addOnSuccessListener {
                         showToast(requireContext(), "Event updated and user updated successfully")
+                        setAlarm(event) // Thiết lập thông báo cho sự kiện mớ
                         // Gửi kết quả lại cho MonthFragment
                         setFragmentResult("requestKey1", Bundle().apply {
                             putInt("position", position)

@@ -3,6 +3,8 @@ package com.hoangdoviet.finaldoan.fragment
 
 import android.graphics.Canvas
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -29,6 +31,7 @@ import com.hoangdoviet.finaldoan.databinding.FragmentTaskBinding
 import com.hoangdoviet.finaldoan.horizontal_calendar_date.HorizontalCalendarAdapter
 import com.hoangdoviet.finaldoan.horizontal_calendar_date.HorizontalCalendarSetUp
 import com.hoangdoviet.finaldoan.model.Task
+import com.hoangdoviet.finaldoan.utils.showToast
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -41,16 +44,24 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
     private var _binding: FragmentTaskBinding? = null
     private val binding get() = _binding!!
     private lateinit var database: DatabaseReference
-    private lateinit var taskAdapter: TaskAdapter
     private val tasks = mutableListOf<Task>()
+//    private var taskAdapter: TaskAdapter = TaskAdapter(tasks)
+    private lateinit var taskAdapter: TaskAdapter
+
     private lateinit var userId: String
     private val todayDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+    private var vitri: Boolean = false
+    private lateinit var DateDelete: String
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentTaskBinding.inflate(inflater, container, false)
+//        Handler(Looper.getMainLooper()).postDelayed({
+//            binding.animationView.visibility = View.VISIBLE
+//            binding.animationView.playAnimation()
+//        }, 0)
         return binding.root
     }
 
@@ -72,140 +83,101 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         // Lấy userId từ phiên đăng nhập hiện tại
         userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         database = FirebaseDatabase.getInstance().getReference()
-        taskAdapter = TaskAdapter(tasks)
+        setupTaskAdapter()
         binding.recyclerView1.layoutManager = LinearLayoutManager(context)
         binding.recyclerView1.adapter = taskAdapter
 //        val todayDate = "20240605"
         updateOverdueTasks()
-//        loadTasksByDate(todayDate)
+        loadTasksByDate(todayDate)
       //  countTasksByDate(todayDate)
-        countCompletedTasksByDate(todayDate)
-
+//        countCompletedTasksByDate(todayDate)
+        loadTaskDatesForNextSevenDays()
 
 //        binding.buttonAddTask.setOnClickListener {
 //            Log.d("TaskActivity", userId + " " + todayDate)
 //            addTask(userId, todayDate, binding.editTextTaskTitle.text.toString())
 //        }
-        val simpleCallback: ItemTouchHelper.SimpleCallback =
-            object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
-                override fun onMove(
-                    recyclerView: RecyclerView,
-                    viewHolder: RecyclerView.ViewHolder,
-                    target: RecyclerView.ViewHolder
-                ): Boolean {
-                    return false
-                }
-
-                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                    val position = viewHolder.getAdapterPosition()
-                    var deleteData: Task? = null
-                    deleteData = tasks.get(position)
-                    tasks.removeAt(position)
-                    taskAdapter.notifyDataSetChanged()
-                    //
-//                    if (productList.size == 0) {
-//                        binding.textview4.setText("Giỏ hàng rỗng")
-//                        binding.tvTotalPrice.setText("0 VND")
-//                        binding.buttonCheckout.setEnabled(false)
-//                    }
-                    deleteTask(userId, todayDate, deleteData.id)
-
-                    val finalDeleteData: Task? = deleteData
-                    if (finalDeleteData != null) {
-                        Snackbar.make(
-                            binding.recyclerView1,
-                            "Xoá " + finalDeleteData.title,
-                            Snackbar.LENGTH_LONG
-                        )
-                            .setAction("Hoàn tác") {
-                                tasks.add(position, finalDeleteData)
-                                taskAdapter.notifyDataSetChanged()
-                                //
-                                addTask(userId, todayDate, finalDeleteData.title)
-                            }
-                            .setAnchorView(R.id.Fabb)
-                            .show()
-                    }
-                }
-
-                override fun onChildDraw(
-                    c: Canvas,
-                    recyclerView: RecyclerView,
-                    viewHolder: RecyclerView.ViewHolder,
-                    dX: Float,
-                    dY: Float,
-                    actionState: Int,
-                    isCurrentlyActive: Boolean
-                ) {
-                    RecyclerViewSwipeDecorator.Builder(
-                        c,
-                        recyclerView,
-                        viewHolder,
-                        dX,
-                        dY,
-                        actionState,
-                        isCurrentlyActive
-                    )
-                        .addBackgroundColor(ContextCompat.getColor(context!!, R.color.color1))
-                        // .addActionIcon(R.drawable.my_icon)
-                        .addSwipeLeftLabel("Xoá")
-                        .create()
-                        .decorate()
-                    super.onChildDraw(
-                        c,
-                        recyclerView,
-                        viewHolder,
-                        dX,
-                        dY,
-                        actionState,
-                        isCurrentlyActive
-                    )
-                }
-
+    }
+    private fun setupTaskAdapter() {
+        taskAdapter = TaskAdapter(tasks) { completedTasksCount, totalTasksCount ->
+            updateProgress(completedTasksCount, totalTasksCount)
+        }
+        binding.recyclerView1.layoutManager = LinearLayoutManager(context)
+        binding.recyclerView1.adapter = taskAdapter
+    }
+    private fun updateProgress(completedTasksCount: Int, totalTasksCount: Int) {
+        if (completedTasksCount == 0 && totalTasksCount == 0) {
+            binding.tvScore.text = "0%"
+            binding.scoreProgressBar.progress = 0
+        } else {
+            val completionRate = if (totalTasksCount > 0) (completedTasksCount.toDouble() / totalTasksCount) * 100 else 0.0
+            val completionRateText = if (completionRate % 1 == 0.0) {
+                String.format("%d%%", completionRate.toInt())
+            } else {
+                String.format("%.1f%%", completionRate)
             }
+            binding.tvScore.text = completionRateText
+            binding.scoreProgressBar.progress = completionRate.toInt()
+//            // Nếu ProgressBar đạt 100%, chạy animation
+            if (completionRate.toInt() == 100) {
+                // Hiển thị animation
+                binding.animationView.visibility = View.VISIBLE
+                binding.animationView.playAnimation()
 
-        val itemTouchHelper = ItemTouchHelper(simpleCallback)
-        itemTouchHelper.attachToRecyclerView(binding.recyclerView1)
+                // Sau 8 giây, ẩn animation
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.animationView.visibility = View.GONE
+                }, 3000)
+            } else {
+                // Ngược lại, ẩn animation
+                binding.animationView.visibility = View.GONE
+            }
+        }
     }
 
-    private fun loadTasksByDate(date: String) {
-        val db = FirebaseFirestore.getInstance()
-        val tasksByDateRef = db.collection("TasksByDate").document(date)
-        tasks.clear()
-        tasksByDateRef.get()
-            .addOnSuccessListener { document ->
-               // Xóa các nhiệm vụ hiện tại trước khi thêm mới
-                if (document != null && document.exists()) {
-                    val taskIds = document.get("taskIds") as? List<String> ?: emptyList()
-                    if (taskIds.isEmpty()) {
-                        Log.d("TaskActivity", "No tasks found for the given date")
-                        taskAdapter.notifyDataSetChanged() // Thông báo adapter về thay đổi
-                        return@addOnSuccessListener
-                    }
 
-                    for (taskId in taskIds) {
-                        db.collection("Tasks").document(taskId).get()
-                            .addOnSuccessListener { taskDocument ->
-                                val task = taskDocument.toObject(Task::class.java)
-                                if (task != null) {
-                                    tasks.add(task)
-                                    Log.d("checktask", task.toString())
-                                    taskAdapter.notifyDataSetChanged() // Thông báo adapter về thay đổi sau khi thêm nhiệm vụ mới
+
+
+
+    private fun loadTasksByDate(date: String) {
+            val db = FirebaseFirestore.getInstance()
+            val tasksByDateRef = db.collection("TasksByDate").document(date)
+            tasks.clear()
+            tasksByDateRef.get()
+                .addOnSuccessListener { document ->
+                    // Xóa các nhiệm vụ hiện tại trước khi thêm mới
+                    if (document != null && document.exists()) {
+                        val taskIds = document.get("taskIds") as? List<String> ?: emptyList()
+                        if (taskIds.isEmpty()) {
+                            Log.d("TaskActivity", "No tasks found for the given date")
+                            taskAdapter.notifyDataSetChanged() // Thông báo adapter về thay đổi
+                            return@addOnSuccessListener
+                        }
+
+                        for (taskId in taskIds) {
+                            db.collection("Tasks").document(taskId).get()
+                                .addOnSuccessListener { taskDocument ->
+                                    val task = taskDocument.toObject(Task::class.java)
+                                    if (task != null) {
+                                        tasks.add(task)
+                                        Log.d("checktask", task.toString())
+                                        taskAdapter.notifyDataSetChanged() // Thông báo adapter về thay đổi sau khi thêm nhiệm vụ mới
+                                    }
                                 }
-                            }
-                            .addOnFailureListener { e ->
-                                Log.e("TaskActivity", "Failed to load task", e)
-                            }
+                                .addOnFailureListener { e ->
+                                    Log.e("TaskActivity", "Failed to load task", e)
+                                }
+                        }
+                    } else {
+                        Log.d("TaskActivity", "No tasks found for the given date")
+                        taskAdapter.notifyDataSetChanged() // Thông báo adapter về thay đổi nếu không có dữ liệu
                     }
-                } else {
-                    Log.d("TaskActivity", "No tasks found for the given date")
-                    taskAdapter.notifyDataSetChanged() // Thông báo adapter về thay đổi nếu không có dữ liệu
                 }
-            }
-            .addOnFailureListener { e ->
-                Log.e("TaskActivity", "Failed to load task IDs by date", e)
-                taskAdapter.notifyDataSetChanged() // Thông báo adapter về thay đổi trong trường hợp thất bại
-            }
+                .addOnFailureListener { e ->
+                    Log.e("TaskActivity", "Failed to load task IDs by date", e)
+                    taskAdapter.notifyDataSetChanged() // Thông báo adapter về thay đổi trong trường hợp thất bại
+                }
+
     }
 
 
@@ -301,45 +273,52 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         db.collection("Tasks").document(taskId).delete()
             .addOnSuccessListener {
                 Log.d("TaskActivity", "Task deleted from Tasks collection successfully")
-
+                Log.d("TaskActivity1", "$date")
                 // Cập nhật taskIds trong TasksByDate
                 val tasksByDateRef = db.collection("TasksByDate").document(date)
                 tasksByDateRef.update("taskIds", FieldValue.arrayRemove(taskId))
                     .addOnSuccessListener {
-                        Log.d(
-                            "TaskActivity",
-                            "Task ID removed from TasksByDate collection successfully"
-                        )
+                        Log.d("TaskActivity1", "Task ID removed from TasksByDate collection successfully $taskId")
+
+                        // Kiểm tra nếu taskIds trống thì xoá luôn tài liệu
+                        tasksByDateRef.get()
+                            .addOnSuccessListener { document ->
+                                if (document != null && document.exists()) {
+                                    val taskIds = document.get("taskIds") as? List<*>
+                                    if (taskIds.isNullOrEmpty()) {
+                                        tasksByDateRef.delete()
+                                            .addOnSuccessListener {
+                                                Log.d("TaskActivity", "Empty TasksByDate document deleted successfully")
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Log.e("TaskActivity", "Failed to delete empty TasksByDate document", e)
+                                            }
+                                    }
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("TaskActivity", "Failed to check TasksByDate document", e)
+                            }
 
                         // Cập nhật taskIds trong User
                         db.collection("User").document(userId)
                             .update("taskIds", FieldValue.arrayRemove(taskId))
                             .addOnSuccessListener {
-                                Log.d(
-                                    "TaskActivity",
-                                    "Task ID removed from User's taskIds successfully"
-                                )
+                                Log.d("TaskActivity", "Task ID removed from User's taskIds successfully")
                             }
                             .addOnFailureListener { e ->
-                                Log.e(
-                                    "TaskActivity",
-                                    "Failed to remove task ID from User's taskIds",
-                                    e
-                                )
+                                Log.e("TaskActivity", "Failed to remove task ID from User's taskIds", e)
                             }
                     }
                     .addOnFailureListener { e ->
-                        Log.e(
-                            "TaskActivity",
-                            "Failed to remove task ID from TasksByDate collection",
-                            e
-                        )
+                        Log.e("TaskActivity", "Failed to remove task ID from TasksByDate collection", e)
                     }
             }
             .addOnFailureListener { e ->
                 Log.e("TaskActivity", "Failed to delete task from Tasks collection", e)
             }
     }
+
     private fun countTasksByDate(date: String) {
         val db = FirebaseFirestore.getInstance()
         val tasksByDateRef = db.collection("TasksByDate").document(date)
@@ -414,78 +393,169 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
                     val taskCount = taskIds.size
                     Log.d("tasksize", "Number of tasks for date $date: $taskCount")
                     binding.textView2.text = "$taskCount nhiệm vụ"
+                    binding.scoreProgressBar.progress = 0
                     Log.d("TaskFragment", "Task IDs for date $date: $taskIds")
                     if (taskIds.isEmpty()) {
                         Log.d("TaskFragment", "No tasks found for the given date")
+                        updateProgress(0, 0) // Gọi hàm updateProgress với giá trị 0
                         return@addOnSuccessListener
                     }
 
                     // Tạo một danh sách các tác vụ để lấy chi tiết
                     val tasksCollection = db.collection("Tasks")
                     val batch = tasksCollection.whereIn(FieldPath.documentId(), taskIds)
+                    var completedTasksCount = 0
                     batch.get()
                         .addOnSuccessListener { querySnapshot ->
-                            var demthanhcong = 0
                             Log.d("TaskFragment", "Found ${querySnapshot.size()} tasks for the given date")
                             for (taskDocument in querySnapshot) {
                                 val task = taskDocument.toObject(Task::class.java)
                                 if (task.status == "Hoàn thành") { // Giả sử "Hoàn thành" là mã cho "Hoàn thành"
-                                    demthanhcong++
+                                    completedTasksCount++
                                     Log.d("CheckTask", "Added task with status 'Hoàn thành': $task")
+                                    Log.d("CheckTask1", "$completedTasksCount - $taskCount")
                                 }
                             }
-                            // Tính phần trăm nhiệm vụ hoàn thành
-                            val completionRate = if (taskCount > 0) (demthanhcong.toDouble() / taskCount) * 100 else 0.0
-                            val completionRateText = if (completionRate % 1 == 0.0) {
-                                String.format("%d%%", completionRate.toInt())
-                            } else {
-                                String.format("%.1f%%", completionRate)
-                            }
-                            binding.tvScore.text = completionRateText
-                            binding.scoreProgressBar.progress = completionRate.toInt()
 
-                            // Bạn có thể cập nhật UI hoặc thực hiện hành động khác tại đây
+                            Log.d("CheckTask1", "$completedTasksCount - $taskCount")
+                            updateProgress(completedTasksCount, taskCount)
                         }
                         .addOnFailureListener { e ->
                             Log.e("TaskFragment", "Failed to load tasks", e)
+                            updateProgress(0, 0) // Trong trường hợp lỗi, cũng cập nhật progress với giá trị 0
+                            binding.textView2.text = "0 nhiệm vụ"
                         }
                 } else {
                     Log.d("TaskFragment", "No tasks found for the given date")
+                    updateProgress(0, 0) // Gọi hàm updateProgress với giá trị 0 khi không có tài liệu nào tồn tại
+                    binding.textView2.text = "0 nhiệm vụ"
                 }
             }
             .addOnFailureListener { e ->
                 Log.e("TaskFragment", "Failed to load task IDs by date", e)
+                updateProgress(0, 0) // Trong trường hợp lỗi, cũng cập nhật progress với giá trị 0
+                binding.textView2.text = "0 nhiệm vụ"
             }
+    }
+
+    private fun loadTaskDatesForNextSevenDays() {
+        val db = FirebaseFirestore.getInstance()
+        val currentDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date()).toInt()
+        val endDate = currentDate + 7
+        val taskDates = mutableListOf<String>()
+
+        for (date in currentDate..endDate) {
+            val tasksByDateRef = db.collection("TasksByDate").document(date.toString())
+            tasksByDateRef.get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        val taskIds = document.get("taskIds") as? List<String> ?: emptyList()
+                        if (taskIds.isNotEmpty()) {
+                            taskDates.add(date.toString())
+                        }
+                    }
+                    // Cập nhật adapter
+                    val calendarList = // Danh sách ngày của bạn
+                        HorizontalCalendarSetUp().setUpCalendarAdapter(binding.recyclerView, this, taskDates)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("TaskFragmentLoadTask", "Failed to load task IDs by date", e)
+                }
+        }
+    }
+    private fun setUpItemTouchHelper(ddMmYy: String) {
+        val simpleCallback: ItemTouchHelper.SimpleCallback =
+            object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    return false
+                }
+
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                    val position = viewHolder.adapterPosition
+                    val deleteData: Task? = tasks[position]
+                    tasks.removeAt(position)
+                    taskAdapter.notifyDataSetChanged()
+
+                    deleteTask(userId, DateDelete, deleteData?.id ?: "")
+
+                    deleteData?.let { finalDeleteData ->
+                        Snackbar.make(
+                            binding.recyclerView1,
+                            "Xoá " + finalDeleteData.title,
+                            Snackbar.LENGTH_LONG
+                        )
+                            .setAction("Hoàn tác") {
+                                tasks.add(position, finalDeleteData)
+                                taskAdapter.notifyDataSetChanged()
+                                addTask(userId, ddMmYy, finalDeleteData.title)
+                            }
+                            .setAnchorView(R.id.Fabb)
+                            .show()
+                    }
+                }
+
+                override fun onChildDraw(
+                    c: Canvas,
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    dX: Float,
+                    dY: Float,
+                    actionState: Int,
+                    isCurrentlyActive: Boolean
+                ) {
+                    RecyclerViewSwipeDecorator.Builder(
+                        c,
+                        recyclerView,
+                        viewHolder,
+                        dX,
+                        dY,
+                        actionState,
+                        isCurrentlyActive
+                    )
+                        .addBackgroundColor(ContextCompat.getColor(context!!, R.color.color1))
+                        .addSwipeLeftLabel("Xoá")
+                        .create()
+                        .decorate()
+                    super.onChildDraw(
+                        c,
+                        recyclerView,
+                        viewHolder,
+                        dX,
+                        dY,
+                        actionState,
+                        isCurrentlyActive
+                    )
+                }
+            }
+
+        val itemTouchHelper = ItemTouchHelper(simpleCallback)
+        itemTouchHelper.attachToRecyclerView(binding.recyclerView1)
     }
 
 
 
-
-
-
-
     override fun onItemClick(ddMmYy: String, dd: String, day: String) {
-        val sdf = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
-        try {
-            val selectedDate: Date = sdf.parse(ddMmYy)
-            val today: Date = sdf.parse(todayDate)
-
-            if (selectedDate.before(today)) {
-//                binding.buttonAddTask.visibility = View.INVISIBLE
-            } else {
-//                binding.buttonAddTask.visibility = View.VISIBLE
+        DateDelete = ddMmYy
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+        if (currentUserUid != null) {
+            if(todayDate != ddMmYy){
+                loadTasksByDate(ddMmYy)
+                vitri = true
             }
+            if(vitri == true && todayDate == ddMmYy){
+                loadTasksByDate(todayDate)
+            }
+            updateOverdueTasks()
+            setUpItemTouchHelper(ddMmYy)
 
-        } catch (e: ParseException) {
-            e.printStackTrace()
+            // countTasksByDate(ddMmYy)
+            countCompletedTasksByDate(ddMmYy)
         }
 
-        binding.textDateMonth.text = ddMmYy
-        tasks.clear()
-        updateOverdueTasks()
-        loadTasksByDate(ddMmYy)
-       // countTasksByDate(ddMmYy)
-        countCompletedTasksByDate(ddMmYy)
     }
 
 }

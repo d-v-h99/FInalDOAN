@@ -3,7 +3,7 @@ package com.hoangdoviet.finaldoan.horizontal_calendar_date
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class CalendarDateModel(var data: Date, var isSelected: Boolean = false) {
+data class CalendarDateModel(var data: Date, var isSelected: Boolean = false, var hasEvent: Boolean = false) {
 
     val calendarDay: String //Sử dụng SimpleDateFormat("EE", Locale.getDefault()) để định dạng ngày thành dạng viết tắt của ngày trong tuần (ví dụ: "Mon", "Tue").
         get() = SimpleDateFormat("EE", Locale("vi", "VN")).format(data)

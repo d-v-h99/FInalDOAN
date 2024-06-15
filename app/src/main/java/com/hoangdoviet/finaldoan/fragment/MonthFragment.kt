@@ -87,6 +87,9 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             val dateString = String.format("%02d/%02d/%04d", day, month, year)
             fetchEventsForDate(dateString)
         }
+        arguments?.getString("EVENT_DATE")?.let { date ->
+            fetchEventsForDate(date)
+        }
 
         return binding.root
     }
@@ -95,6 +98,8 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
         super.onViewCreated(view, savedInstanceState)
         val locale = Locale("vi")
         Locale.setDefault(locale)
+        // Lấy dữ liệu từ Bundle và gọi hàm fetchEventsForDate
+
         binding.calendarView.setTitleFormatter { day ->
             val dateFormat: DateFormat = SimpleDateFormat("LLLL yyyy", locale) // tháng rồi năm
             dateFormat.format(day.getDate())
@@ -213,10 +218,12 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
                 }
 
                 val eventsRef = FirebaseFirestore.getInstance().collection("Events")
-                val partitionedEventIDs = eventIDs.chunked(15)
+                val partitionedEventIDs = eventIDs.chunked(10) // Chia nhỏ thành từng phần 10 phần tử
 
                 val tasks = partitionedEventIDs.map { part ->
-                    eventsRef.whereIn("eventID", part).whereEqualTo("date", date).get()
+                    eventsRef.whereIn("eventID", part)
+                        .whereEqualTo("date", date)
+                        .get()
                 }
 
                 Tasks.whenAllComplete(tasks).addOnSuccessListener { taskResults ->
@@ -229,6 +236,9 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
                             Log.d("Error", "Error fetching events: ${taskResult.exception}")
                         }
                     }
+
+                    // Sắp xếp lại danh sách sự kiện theo timeStart
+                    events.sortBy { it.timeStart }
 
                     if (events.isNotEmpty()) {
                         showEventsBottomSheet(events)
@@ -245,6 +255,7 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             Toast.makeText(context, "Error fetching user data: $e", Toast.LENGTH_SHORT).show()
         }
     }
+
 
 
 

@@ -13,7 +13,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.model.Task
 
-class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
+class TaskAdapter(
+    private val tasks: MutableList<Task>,
+    private val onTaskCompleted: (completedTasksCount: Int, totalTasksCount: Int) -> Unit
+) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
 
     private val db = FirebaseFirestore.getInstance()
 
@@ -37,22 +40,42 @@ class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<T
             "Hoàn thành" -> {
                 holder.radioButton.visibility = View.GONE
                 holder.imageView.visibility = View.VISIBLE
-                holder.titleTextView.paintFlags = holder.titleTextView.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                holder.titleTextView.paintFlags =
+                    holder.titleTextView.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
                 holder.imageView.setImageResource(R.drawable.ic_task_vector) // Hoặc biểu tượng "Hoàn thành" khác nếu có
-                holder.titleTextView.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.black))
+                holder.titleTextView.setTextColor(
+                    ContextCompat.getColor(
+                        holder.itemView.context,
+                        R.color.black
+                    )
+                )
             }
+
             "Quá hạn" -> {
                 holder.radioButton.visibility = View.GONE
                 holder.imageView.visibility = View.VISIBLE
                 holder.imageView.setImageResource(R.drawable.ic_close)
-                holder.titleTextView.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.color2))
-                holder.titleTextView.paintFlags = holder.titleTextView.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                holder.titleTextView.setTextColor(
+                    ContextCompat.getColor(
+                        holder.itemView.context,
+                        R.color.color2
+                    )
+                )
+                holder.titleTextView.paintFlags =
+                    holder.titleTextView.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
             }
+
             else -> {
                 holder.radioButton.visibility = View.VISIBLE
                 holder.imageView.visibility = View.GONE
-                holder.titleTextView.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.black))
-                holder.titleTextView.paintFlags = holder.titleTextView.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                holder.titleTextView.setTextColor(
+                    ContextCompat.getColor(
+                        holder.itemView.context,
+                        R.color.black
+                    )
+                )
+                holder.titleTextView.paintFlags =
+                    holder.titleTextView.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
             }
         }
 
@@ -64,6 +87,10 @@ class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<T
 
             // Update task status in Firebase
             updateTaskStatus(task.id, task.status)
+
+            // Recalculate and notify the completion rate
+            val completedTasks = tasks.count { it.status == "Hoàn thành" }
+            onTaskCompleted(completedTasks, tasks.size)
         }
     }
 
@@ -74,12 +101,14 @@ class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<T
     fun addTask(task: Task) {
         tasks.add(task)
         notifyItemInserted(tasks.size - 1)
+        updateCompletionRate()
     }
 
     fun updateTasks(newTasks: List<Task>) {
         tasks.clear()
         tasks.addAll(newTasks)
         notifyDataSetChanged()
+        updateCompletionRate()
     }
 
     private fun updateTaskStatus(taskId: String, status: String) {
@@ -92,5 +121,10 @@ class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<T
                 // Failed to update task status
                 e.printStackTrace()
             }
+    }
+
+    private fun updateCompletionRate() {
+        val completedTasks = tasks.count { it.status == "Hoàn thành" }
+        onTaskCompleted(completedTasks, tasks.size)
     }
 }

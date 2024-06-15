@@ -36,10 +36,13 @@ class HorizontalCalendarSetUp {
 
     fun setUpCalendarAdapter(
         recyclerView: RecyclerView,
-        listener: HorizontalCalendarAdapter.OnItemClickListener
+        listener: HorizontalCalendarAdapter.OnItemClickListener,
+        taskDates: List<String> = listOf()
     ): String {
         val snapHelper: SnapHelper = LinearSnapHelper()
-        snapHelper.attachToRecyclerView(recyclerView)
+        if (recyclerView.onFlingListener == null) {
+            snapHelper.attachToRecyclerView(recyclerView)
+        }
 
         adapter = HorizontalCalendarAdapter(listener) { calendarDateModel, position ->
             calendarList2.forEachIndexed { index, calendarModel ->
@@ -57,10 +60,33 @@ class HorizontalCalendarSetUp {
         adapter.setData(calendarList2)
         recyclerView.adapter = adapter
 
-        val monthDate = setUpCalendar(listener)
+        val monthDate = setUpCalendar(listener, taskDates)
         scrollToToday(recyclerView)
         triggerTodayClick()
         return monthDate
+    }
+    private fun setUpCalendar(listener: HorizontalCalendarAdapter.OnItemClickListener, taskDates: List<String>): String {
+        val calendarList = ArrayList<CalendarDateModel>()
+        val monthCalendar = cal.clone() as Calendar
+        val maxDaysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+        monthCalendar.set(Calendar.DAY_OF_MONTH, 1)
+        val today = Calendar.getInstance()
+
+        for (day in 1..maxDaysInMonth) {
+            val isToday = (day == today.get(Calendar.DAY_OF_MONTH))
+            val dateStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(monthCalendar.time)
+            val hasEvent = taskDates.contains(dateStr)
+            calendarList.add(CalendarDateModel(monthCalendar.time, isToday, hasEvent))
+            monthCalendar.add(Calendar.DAY_OF_MONTH, 1)
+        }
+
+        calendarList2.clear()
+        calendarList2.addAll(calendarList)
+        adapter.setOnItemClickListener(listener)
+        adapter.setData(calendarList)
+        Log.d("checkLich", sdf.format(cal.time))
+        return sdf.format(cal.time)
     }
 
     private fun setUpCalendar(listener: HorizontalCalendarAdapter.OnItemClickListener): String {
