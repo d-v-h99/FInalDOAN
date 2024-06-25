@@ -1,10 +1,16 @@
 package com.hoangdoviet.finaldoan
 
 
+import android.app.Dialog
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
+import android.view.Window
 import android.view.WindowManager
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -73,8 +79,10 @@ class MainActivity : AppCompatActivity() {
     // }
     fun showDialogOne() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.sample_dialog_one)
+
         dialog.findViewById<RelativeLayout>(R.id.rl_chatbot)?.setOnClickListener {
             val intent = Intent(this, MainActivity2::class.java)
             startActivity(intent)
@@ -86,6 +94,15 @@ class MainActivity : AppCompatActivity() {
             val eventFragment = EventFragment()
             eventFragment.show(supportFragmentManager, "EventFragment")
             dialog.dismiss()
+//            val  dialog =  Dialog(this);
+//            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+//            dialog.setContentView(R.layout.fragment_event);
+//            dialog.show();
+//            dialog.getWindow()?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+//            dialog.getWindow()?.setBackgroundDrawable( ColorDrawable(Color.TRANSPARENT));
+//            dialog.getWindow()?.getAttributes()?.windowAnimations ?: R.style.DialogAnimation;
+//            dialog.getWindow()?.setGravity(Gravity.BOTTOM);
+
         }
         dialog.findViewById<RelativeLayout>(R.id.rl_event)?.setOnClickListener {
             val formTask = FormTaskFragment()
@@ -95,6 +112,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         dialog.show()
+        dialog.getWindow()?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow()?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow()?.setGravity(Gravity.BOTTOM);
 
 
     }

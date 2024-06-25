@@ -3,20 +3,19 @@ package com.hoangdoviet.finaldoan.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.databinding.HolidayItemBinding
 import com.hoangdoviet.finaldoan.model.Holiday
 
-// HolidaysAdapter.kt
 class HolidaysAdapter(private var holidays: List<Holiday>) :
     RecyclerView.Adapter<HolidaysAdapter.HolidayViewHolder>() {
 
     inner class HolidayViewHolder(private val binding: HolidayItemBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(holiday: Holiday) {
+        fun bind(holiday: Holiday, isLastItem: Boolean) {
             binding.holidayDate.text = holiday.date
             binding.holidayDescription.text = holiday.description
+            // Hide the view divider if it's the last item
+            binding.viewDivider.visibility = if (isLastItem) View.GONE else View.VISIBLE
         }
     }
 
@@ -26,7 +25,8 @@ class HolidaysAdapter(private var holidays: List<Holiday>) :
     }
 
     override fun onBindViewHolder(holder: HolidayViewHolder, position: Int) {
-        holder.bind(holidays[position])
+        val isLastItem = position == holidays.size - 1
+        holder.bind(holidays[position], isLastItem)
     }
 
     override fun getItemCount(): Int = holidays.size
@@ -35,10 +35,9 @@ class HolidaysAdapter(private var holidays: List<Holiday>) :
         holidays = newHolidays
         notifyDataSetChanged()
     }
+
     fun clearData(){
-        val newHolidayList = mutableListOf<Holiday>()
-        holidays = newHolidayList
+        holidays = emptyList()
         notifyDataSetChanged()
     }
-
 }

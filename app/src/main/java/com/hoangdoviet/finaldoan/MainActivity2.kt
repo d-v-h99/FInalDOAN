@@ -1,10 +1,12 @@
 package com.hoangdoviet.finaldoan
 
+import android.accounts.AccountManager
+import android.app.Activity
 import android.app.SearchManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.provider.AlarmClock
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -20,22 +22,37 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.github.zagum.speechrecognitionview.adapters.RecognitionListenerAdapter
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.api.client.extensions.android.http.AndroidHttp
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.util.DateTime
+import com.google.api.client.util.ExponentialBackOff
+import com.google.api.services.calendar.CalendarScopes
+import com.google.api.services.calendar.model.EventDateTime
+import com.google.api.services.calendar.model.EventReminder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hoangdoviet.finaldoan.adapter.MessageAdapter
 import com.hoangdoviet.finaldoan.databinding.ActivityMain2Binding
+import com.hoangdoviet.finaldoan.firebase.FirebaseHelper
+import com.hoangdoviet.finaldoan.fragment.profileFragment
+import com.hoangdoviet.finaldoan.fragment.profileFragment.Companion.PREF_ACCOUNT_NAME
 import com.hoangdoviet.finaldoan.model.Event
+import com.hoangdoviet.finaldoan.model.EventCreator
 import com.hoangdoviet.finaldoan.model.Message
 import com.hoangdoviet.finaldoan.utils.Constants
 import com.hoangdoviet.finaldoan.utils.DateScheduler
 import com.hoangdoviet.finaldoan.utils.Time
 import com.hoangdoviet.finaldoan.utils.showToast
+import com.hoangdoviet.finaldoan.viewmodel.UserGoogleViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -50,18 +67,14 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import java.io.BufferedReader
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileWriter
-import java.io.IOException
+import pub.devrel.easypermissions.EasyPermissions
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
-import kotlin.coroutines.suspendCoroutine
+
 
 class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     lateinit var binding: ActivityMain2Binding
@@ -78,11 +91,30 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         // ENTER YOUR KEY
     )
     private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private  var firebaseHelper: FirebaseHelper = FirebaseHelper()
+    private lateinit var viewModel: UserGoogleViewModel
+    private var checklogin = false
+    private var mCredential: GoogleAccountCredential? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMain2Binding.inflate(layoutInflater)
         setContentView(binding.root)
+        initCredentials()
+//        val event = Event(
+//            eventID = generateEventId(),
+//            date = "18/06/2024",
+//            title = "Ktra giong noi4",
+//            timeStart = "13:50",
+//            timeEnd = "13:52",
+//            repeat = 1
+//        )
+//        if (mCredential?.selectedAccountName != null) {
+//            createCalendarEvent(event,null)  // Ví dụ với loại lặp lại hàng ngày
+//        } else {
+//            // Yêu cầu người dùng chọn tài khoản Google
+//            chooseAccount()
+//        }
         val toolbar: Toolbar = binding.toolbar
         setSupportActionBar(toolbar)
         //recyclerView()
@@ -98,13 +130,90 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         CoroutineScope(Dispatchers.Main).launch {
             callGetArticle("https://vnexpress.net/")
         }
+        binding.btnHistory.setOnClickListener {
+            val currentUserUid = mAuth.currentUser?.uid
+            if(currentUserUid.isNullOrEmpty()){
+                showToast(this, "Đăng nhập tài khoản để xem lịch sử trò chuyện")
+                return@setOnClickListener
+            }
+            firebaseHelper.getAllMessages { messages ->
+                adapter.messageList = messages.toMutableList()
+                adapter.notifyDataSetChanged()
+                binding.reyclerviewMessageList.scrollToPosition(adapter.itemCount - 1)
+            }
+        }
+        // Get the ViewModel instance
+        viewModel = ViewModelProvider(this).get(UserGoogleViewModel::class.java)
+//        viewModel.setGoogleLoggedIn(viewModel.isGoogleLoggedIn.value ?: false)
+        viewModel.isGoogleLoggedIn.observe(this, Observer { isLoggedIn ->
+            checklogin = isLoggedIn
+            if (isLoggedIn) {
+                showToast(this, "Đã đăng nhập")
+                Log.d("checkdangnhap", "Đăng nhập rồi")
+                if (mCredential?.selectedAccountName == null){
+                    chooseAccount()
+                }
+            } else {
+                showToast(this, "Đã thoát")
+                Log.d("checkdangnhap", "Chưa đăng nhập")
+            }
+        })
+
+
     }
+    private fun initCredentials() {
+        mCredential = GoogleAccountCredential.usingOAuth2(
+            this, listOf(CalendarScopes.CALENDAR)
+        ).setBackOff(ExponentialBackOff())
+        val accountName = getPreferences(Context.MODE_PRIVATE)
+            .getString(profileFragment.PREF_ACCOUNT_NAME, null)
+        if (accountName != null) {
+            mCredential?.selectedAccountName = accountName
+        }
+        Log.d("checkkklogin", mCredential.toString())
+    }
+    private fun chooseAccount() {
+        if (EasyPermissions.hasPermissions(this, android.Manifest.permission.GET_ACCOUNTS)) {
+            val accountName = getPreferences(Context.MODE_PRIVATE)
+                .getString(profileFragment.PREF_ACCOUNT_NAME, null)
+            if (accountName != null) {
+                mCredential?.selectedAccountName = accountName
+            } else {
+                mCredential?.newChooseAccountIntent()
+                    ?.let { startActivityForResult(it, profileFragment.REQUEST_ACCOUNT_PICKER) }
+            }
+        } else {
+            EasyPermissions.requestPermissions(
+                this, "Ứng dụng cần quyền truy cập vào tài khoản Google của bạn.",
+                profileFragment.REQUEST_PERMISSION_GET_ACCOUNTS, android.Manifest.permission.GET_ACCOUNTS
+            )
+        }
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            profileFragment.REQUEST_ACCOUNT_PICKER -> {
+                if (resultCode == Activity.RESULT_OK && data != null && data.extras != null) {
+                    val accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+                    if (accountName != null) {
+                        val settings = getPreferences(Context.MODE_PRIVATE)
+                        val editor = settings.edit()
+                        editor.putString(profileFragment.PREF_ACCOUNT_NAME, accountName)
+                        editor.apply()
+                        mCredential?.selectedAccountName = accountName
+                        Log.d("checkkklogin", "Account selected: $accountName")
+                    }
+                }
+            }
+        }
+    }
+
 
     private fun setup() {
         // setup rcv
         adapter = MessageAdapter()
         binding.reyclerviewMessageList.adapter = adapter
-        binding.reyclerviewMessageList.layoutManager = LinearLayoutManager(applicationContext)
+        binding.reyclerviewMessageList.layoutManager = LinearLayoutManager(this)
         // layout
         binding.layoutChatbox.visibility = View.INVISIBLE
         //
@@ -184,6 +293,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         tts.stop()
         binding.btnListen.setVisibility(View.GONE)
         binding.btnKeyBoard.setVisibility(View.GONE)
+        binding.btnHistory.visibility = View.GONE
         binding.recognitionView!!.play()
         binding.recognitionView!!.visibility = View.VISIBLE
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
@@ -199,6 +309,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun finishRecognition() {
         binding.btnListen.setVisibility(View.VISIBLE)
         binding.btnKeyBoard.setVisibility(View.VISIBLE)
+        binding.btnHistory.visibility = View.VISIBLE
         binding.recognitionView!!.stop()
         binding.recognitionView!!.play()
         binding.recognitionView!!.visibility = View.GONE
@@ -217,116 +328,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         closeKeyboard()
     }
 
-    private fun writeCsvMessage() {
-        val folder = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-            "SpeechApplication"
-        )
-        if (!folder.exists()) {
-            folder.mkdirs()
-        }
-        val csv = File(folder, "message.csv")
-        if (!csv.exists()) {
-            try {
-                csv.createNewFile()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
-        var data = ""
-        for (m in messagesList) {
-            data += (m.message + ";" + m.time + ";" + m.id
-                    ) + "\n"
-        }
-        Log.d("writeCsvMessage: ", data)
-        var fw: FileWriter? = null
-        try {
-            fw = FileWriter(csv.getAbsoluteFile())
-            val bw = BufferedWriter(fw)
-            bw.write(data)
-            bw.close()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
 
-    private fun readCsvMessage() {
-        val folder = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-            "SpeechApplication"
-        ).absoluteFile
-
-        if (folder.exists()) {
-            val csv = File(folder, "message.csv")
-            if (csv.exists()) {
-                var br: BufferedReader? = null
-                try {
-                    br = csv.bufferedReader()
-                    br.forEachLine { line ->
-                        val ms = line.split(";").dropLastWhile { it.isEmpty() }
-                        if (ms.size == 3) {
-                            val message = ms[0]
-                            val time = ms[1].toLongOrNull()
-                            val isUser = ms[2]
-                            if (message != "Chào bạn, Tôi có thể giúp gì cho bạn!" && time != null) {
-                                Log.d("readCsvMessage", "$message $isUser $time")
-                                messagesList.add(Message(message, isUser, time.toString()))
-                            }
-                        }
-                    }
-                    adapter.notifyDataSetChanged()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                } finally {
-                    try {
-                        br?.close()
-                    } catch (ex: IOException) {
-                        ex.printStackTrace()
-                    }
-                }
-            }
-        }
-    }
-
-
-    private fun readCsvMessage1() {
-        val folder = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-            "SpeechApplication"
-        ).absoluteFile
-
-        if (folder.exists()) {
-            val csv = File(folder, "message.csv")
-            if (csv.exists()) {
-                var br: BufferedReader? = null
-                try {
-                    br = csv.bufferedReader()
-                    var line: String?
-                    while (br.readLine().also { line = it } != null) {
-                        val ms = line!!.split(";").dropLastWhile { it.isEmpty() }
-                        if (ms.size == 3) {
-                            val message = ms[0]
-                            val time = ms[1].toLongOrNull()
-                            val isUser = ms[2]
-                            if (message != "Chào bạn, Tôi có thể giúp gì cho bạn!" && time != null) {
-                                Log.d("readCsvMessage", "$message $isUser $time")
-                                messagesList.add(Message(message, isUser, Time.timeStamp()))
-                            }
-                        }
-                    }
-                    adapter.notifyDataSetChanged()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                } finally {
-                    try {
-                        br?.close()
-                    } catch (ex: IOException) {
-                        ex.printStackTrace()
-                    }
-                }
-            }
-        }
-    }
 
 
     fun showKeyboard() {
@@ -399,8 +401,10 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             //Adds it to our local list
             messagesList.add(Message(message, Constants.SEND_ID, timeStamp))
             binding.edittextChatbox.setText("")
-
+            // Hiển thị loading indicator
+            adapter.setLoading(true)
             adapter.insertMessage(Message(message, Constants.SEND_ID, timeStamp))
+            firebaseHelper.insertMessage(Message(message, Constants.SEND_ID, timeStamp))
             binding.reyclerviewMessageList.scrollToPosition(adapter.itemCount - 1)
 
             botResponse(message)
@@ -552,6 +556,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     repeat = 0
                                 )
                                 responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
+                              //  if(checklogin) createCalendarEvent(event, null)
                                 addSingleEvent(currentUserUid, event)
 
                             }
@@ -583,8 +588,11 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     repeat = 0
                                 )
                                 responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
-                                addSingleEvent(currentUserUid, event)
-
+                                Log.d("checklogin", checklogin.toString())
+                                if(checklogin) {
+                                    createCalendarEvent(event)
+                                }
+                                    addSingleEvent(currentUserUid, event)
                             }
 
                         }catch (e: Exception){
@@ -593,12 +601,14 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
                     message.toLowerCase().contains("hôm nay") && message.toLowerCase().contains("sự kiện") -> {
                         val currentUserUid = mAuth.currentUser?.uid!!
+                        Log.d("checkhomnay", currentUserUid.toString())
                         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                         val todayDate = dateFormat.format(Date())
-
+                        Log.d("checkhomnay", todayDate)
                         val events = withContext(Dispatchers.IO) {
                             getEventsByUserAndDate(currentUserUid, todayDate)
                         }
+                        Log.d("checkhomnay", events.toString())
 
                         responseText = if (events.isNotEmpty()) {
                             events.joinToString(separator = "\n") { event ->
@@ -621,7 +631,9 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 //                val index = messagesList.indexOf(loadingMessage)
 //                Log.d("check", index.toString())
                 //
+                adapter.setLoading(false)
                 adapter.insertMessage(Message(responseText, Constants.RECEIVE_ID, timeStamp))
+                firebaseHelper.insertMessage(Message(responseText, Constants.RECEIVE_ID, timeStamp))
                 binding.reyclerviewMessageList.scrollToPosition(adapter.itemCount - 1)
                 if (ArticleText.isNotEmpty()) {
                     playNews(ArticleText)
@@ -634,28 +646,178 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
     }
-    suspend fun getEventsByUserAndDate(userId: String, date: String): List<Event> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val db = FirebaseFirestore.getInstance()
-                val userRef = db.collection("User").document(userId)
+    private fun ensureCredential() {
+        if (mCredential == null) {
+            mCredential = GoogleAccountCredential.usingOAuth2(
+                this, listOf(CalendarScopes.CALENDAR)
+            ).setBackOff(ExponentialBackOff())
 
-                val userDocument = userRef.get().await()
-                val eventIds = userDocument.get("eventID") as? List<String> ?: emptyList()
+            val accountName = getPreferences(Context.MODE_PRIVATE)
+                .getString(PREF_ACCOUNT_NAME, null)
 
+            if (accountName != null) {
+                mCredential?.selectedAccountName = accountName
+            } else {
+                // Xử lý khi tài khoản không có hoặc null
+                Log.e("Credential22", "Account name is null")
+            }
+        }
+    }
+
+    private fun createCalendarEvent(event: Event, recurrenceType: String? =null) {
+        try {
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+
+            val startDateTimeString = "${event.date} ${event.timeStart}"
+            val endDateTimeString = "${event.date} ${event.timeEnd}"
+
+            val startDate = dateFormat.parse(startDateTimeString)
+            val endDate = dateFormat.parse(endDateTimeString)
+
+            val startDateTime = DateTime(startDate)
+            val endDateTime = DateTime(endDate)
+
+            val googleEvent = com.google.api.services.calendar.model.Event()
+                .setSummary(event.title)
+                .setLocation("Hà Nội, Việt Nam")
+                .setDescription("Đặt lịch bởi ứng dụng HoangLich")
+            val start = EventDateTime()
+                .setDateTime(startDateTime)
+                .setTimeZone("Asia/Ho_Chi_Minh")
+            googleEvent.start = start
+            val end = EventDateTime()
+                .setDateTime(endDateTime)
+                .setTimeZone("Asia/Ho_Chi_Minh")
+            googleEvent.end = end
+            // Thiết lập tái phát
+            val recurrence = when (recurrenceType) {
+                "1" -> listOf("RRULE:FREQ=DAILY;COUNT=10")
+                "3" -> listOf("RRULE:FREQ=WEEKLY;COUNT=10")
+                "4" -> listOf("RRULE:FREQ=MONTHLY;COUNT=10")
+                "5" -> listOf("RRULE:FREQ=YEARLY;COUNT=10")
+                else -> null
+            }
+            recurrence?.let {
+                googleEvent.recurrence = it
+            }
+
+            val reminderOverrides = listOf(
+                EventReminder().setMethod("email").setMinutes(24 * 60),
+                EventReminder().setMethod("popup").setMinutes(10)
+            )
+
+            val reminders = com.google.api.services.calendar.model.Event.Reminders()
+                .setUseDefault(false)
+                .setOverrides(reminderOverrides)
+            googleEvent.reminders = reminders
+
+            val calendarId = "primary"
+            val transport = AndroidHttp.newCompatibleTransport()
+            val jsonFactory = JacksonFactory.getDefaultInstance()
+            val service = com.google.api.services.calendar.Calendar.Builder(
+                transport, jsonFactory, mCredential
+            )
+                .setApplicationName("Google Calendar API Android Quickstart")
+                .build()
+            Log.d("checkkklogin", mCredential.toString())
+
+            EventCreator(this,service, calendarId, googleEvent).execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d("checkkklogin", e.message.toString())
+            Toast.makeText(this, "Lỗi khi tạo sự kiện: ${e.message}", Toast.LENGTH_LONG).show()
+
+        }
+
+    }
+
+    //    private suspend fun getEventsByUserAndDate(userId: String, date: String): List<Event> {
+//        return withContext(Dispatchers.IO) {
+//            try {
+//                val db = FirebaseFirestore.getInstance()
+//                val userRef = db.collection("User").document(userId)
+//
+//                Log.d("getEventsByUserAndDate", "Fetching user document for userId: $userId")
+//                val userDocument = userRef.get().await()
+//                Log.d("getEventsByUserAndDate", "User document fetched: $userDocument")
+//
+//                val eventIds = userDocument.get("eventID") as? List<String> ?: emptyList()
+//                Log.d("getEventsByUserAndDate", "Event IDs: $eventIds")
+//
+//                if (eventIds.isEmpty()) {
+//                    Log.d("getEventsByUserAndDate", "No event IDs found for user.")
+//                    return@withContext emptyList<Event>()
+//                }
+//
+//                val eventsRef = db.collection("Events")
+//                Log.d("getEventsByUserAndDate", "Fetching events for date: $date")
+//                val eventsSnapshot = eventsRef.whereIn("eventID", eventIds)
+//                    .whereEqualTo("date", date)
+//                    .get()
+//                    .await()
+//
+//                Log.d("getEventsByUserAndDate", "Events snapshot: $eventsSnapshot")
+//                eventsSnapshot.toObjects(Event::class.java)
+//            } catch (e: Exception) {
+//                Log.e("getEventsByUserAndDate", "Error fetching events", e)
+//                e.printStackTrace()
+//                emptyList()
+//            }
+//        }
+//    }
+private suspend fun getEventsByUserAndDate(userId: String, date: String): List<Event> {
+    return withContext(Dispatchers.IO) {
+        try {
+            val db = FirebaseFirestore.getInstance()
+            val userRef = db.collection("User").document(userId)
+
+            Log.d("Firestore", "Fetching user document for userId: $userId")
+            val userDocument = userRef.get().await()
+            Log.d("Firestore", "User document fetched: ${userDocument.data}")
+
+            val eventIds = userDocument.get("eventID") as? List<String> ?: emptyList()
+            Log.d("Firestore", "Event IDs: $eventIds")
+
+            if (eventIds.isEmpty()) {
+                Log.d("Firestore", "No event IDs to query")
+                return@withContext emptyList<Event>()
+            }
+
+            // Tạo danh sách để lưu kết quả
+            val resultEvents = mutableListOf<Event>()
+
+            // Giới hạn danh sách eventID để tránh lỗi quá giới hạn của Firestore
+            for (chunk in eventIds.chunked(30)) {
                 val eventsRef = db.collection("Events")
-                val eventsSnapshot = eventsRef.whereIn("eventID", eventIds)
+                val eventsSnapshot = eventsRef.whereIn("eventID", chunk)
                     .whereEqualTo("date", date)
                     .get()
                     .await()
 
-                eventsSnapshot.toObjects(Event::class.java)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                emptyList()
+                val events = eventsSnapshot.toObjects(Event::class.java)
+                resultEvents.addAll(events)
+
+                // Kiểm tra nếu đã đủ 10 sự kiện
+                if (resultEvents.size >= 10) {
+                    break
+                }
             }
+
+
+            resultEvents
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("Firestore", "Error fetching events", e)
+            emptyList()
         }
     }
+}
+
+
+
+
+
+
     fun convertDateString(inputDate: String): String {
         // Định dạng đầu vào
         val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -770,6 +932,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 return@async content
             } catch (e: Exception) {
                 e.printStackTrace()
+                Log.d("chekvang", e.toString())
                 return@async "Có lỗi xảy ra khi truy cập thông tin giá vàng."
             }
         }

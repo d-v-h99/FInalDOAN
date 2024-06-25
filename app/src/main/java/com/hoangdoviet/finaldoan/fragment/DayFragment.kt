@@ -189,7 +189,7 @@ class DayFragment : Fragment() {
 
         @SuppressLint("SetTextI18n")
         override fun run() {
-            timer.scheduleAtFixedRate(0, 2000) {
+            timer.scheduleAtFixedRate(0, 1000) {
                 val currentDatee = Calendar.getInstance()
                 val hourss = currentDatee.get(Calendar.HOUR_OF_DAY)
                 val minutee = currentDatee.get(Calendar.MINUTE)

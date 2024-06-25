@@ -134,7 +134,7 @@ object DateScheduler {
                 }
                 temporalWords.any { it in listTuan } -> {
                     if (pastDaysOfWeek.contains(temporalWord)) {
-                        "${convertedDate.plusDays(7)}"
+                        "${convertedDate}"
                     } else {
                         "${convertedDate.plusDays(7)}"
                     }

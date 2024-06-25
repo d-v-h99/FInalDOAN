@@ -1,6 +1,7 @@
 package com.hoangdoviet.finaldoan.fragment
 
 import android.app.Dialog
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
+import com.andrefrsousa.superbottomsheet.SuperBottomSheetFragment
 import com.bigkoo.pickerview.builder.TimePickerBuilder
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -25,19 +27,29 @@ import com.hoangdoviet.finaldoan.utils.RepeatMode
 import com.hoangdoviet.finaldoan.utils.addYearsToDate
 import com.hoangdoviet.finaldoan.utils.showToast
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
 
-class FormTaskFragment : BottomSheetDialogFragment() {
+class FormTaskFragment : SuperBottomSheetFragment() {
     private lateinit var binding: FragmentFormTaskBinding
     private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val mFirestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     lateinit var textDatePicker: String
+
+    override fun animateStatusBar() = false  // Tắt animation cho status bar
+    override fun getStatusBarColor() = Color.TRANSPARENT  // Đặt màu status bar là trong suốt
+    //        override fun getExpandedHeight() = SuperBottomSheetFragment.ExpandedHeight.MATCH_PARENT
+    override fun getDim() = 0.4f
+    override fun getCornerRadius() = resources.getDimension(R.dimen.custom_corner_radius)
+    override fun isSheetAlwaysExpanded() = true
+    override fun getExpandedHeight(): Int =resources.getDimensionPixelSize(R.dimen.custom_peek_height)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        super.onCreateView(inflater, container, savedInstanceState)
         binding = FragmentFormTaskBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -85,19 +97,23 @@ class FormTaskFragment : BottomSheetDialogFragment() {
         val month = monthFormat.format(date)
         val year = yearFormat.format(date)
         if (check == true) {
-            return "Ngày $day tháng $month năm $year"
+            return "$day/$month/$year"
         } else return "$year$month$day"
 
     }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-        return dialog
-    }
+//    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+//        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+//        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+//        return dialog
+//    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val calendarDay = Calendar.getInstance().time
+        binding.valueDate.text = formatDate(calendarDay, true)
+        textDatePicker = formatDate(calendarDay, false)
+
         binding.date.setOnClickListener {
             datePicker.show()
         }
@@ -106,6 +122,10 @@ class FormTaskFragment : BottomSheetDialogFragment() {
                 val currentUserUid = mAuth.currentUser?.uid
                 if (currentUserUid == null) {
                     showToast(requireContext(), "User is not logged in.")
+                    return@setOnClickListener
+                }
+                if(binding.valueTitle.text.isEmpty()) {
+                    showToast(requireContext(), "Tiêu đề nhiệm vụ không được để trống.")
                     return@setOnClickListener
                 }
                 addTask(currentUserUid,textDatePicker, binding.valueTitle.text.toString() )
@@ -122,7 +142,7 @@ class FormTaskFragment : BottomSheetDialogFragment() {
     private fun addTask(userId: String, date: String, title: String) {
         val db = FirebaseFirestore.getInstance()
         val taskId = db.collection("Tasks").document().id
-        val task = Task(id = taskId, title = title, status = "Chưa làm", userId = userId)
+        val task = Task(id = taskId, title = title, status = "Chưa làm")
 
         // Thêm task vào collection Tasks
         db.collection("Tasks").document(taskId).set(task)

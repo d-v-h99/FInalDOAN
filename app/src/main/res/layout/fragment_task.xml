@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF"
+    android:background="#FFF8F4"
+
     tools:context=".fragment.TaskFragment">
 
     <com.airbnb.lottie.LottieAnimationView
@@ -25,9 +26,10 @@
         android:id="@+id/iv_calendar_previous"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="20dp"
+        android:padding="15dp"
         android:src="@drawable/left_arrow"
         app:tint="@color/black"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -35,7 +37,7 @@
         android:id="@+id/iv_calendar_next"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="20dp"
+        android:padding="15dp"
         android:src="@drawable/right_arrow"
         app:tint="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
@@ -47,7 +49,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:text="December 2020"
+        android:padding="10dp"
         android:textColor="@color/black"
+        android:background="@drawable/bg_button1"
         app:layout_constraintBottom_toBottomOf="@id/iv_calendar_next"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -92,8 +96,9 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="-510dp"
-        android:backgroundTint="#D8AEAE"
+        android:layout_marginTop="-450dp"
+        android:backgroundTint="#F8BB71"
+
         app:cardCornerRadius="16dp"
         android:id="@+id/cardview"
         app:layout_constraintBottom_toBottomOf="parent"

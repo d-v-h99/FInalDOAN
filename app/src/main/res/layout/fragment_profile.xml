@@ -20,10 +20,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Đăng nhập" />
+
+
+    <Button
+        android:id="@+id/btnLoginGoogleAPI"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dang nhap Google" />
+    <Button
+        android:id="@+id/btnAddEvent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="btnLich" />
     <Button
         android:id="@+id/btnLogout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Đăng xuất" />
+    <Button
+        android:id="@+id/btnLogoutGoogle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Thoát liên kết tk Google"
+        android:enabled="false"/>
 
 </LinearLayout>

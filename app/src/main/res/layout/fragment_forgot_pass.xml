@@ -4,14 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-
+    android:background="#FFF1E5"
     tools:context=".fragment.forgotPassFragment">
     <TextView
         android:id="@+id/tvForgetPassHeading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="32dp"
-        android:text="@string/field_forgot_password"
+        android:text="Quên mật khẩu"
         android:textAlignment="center"
         android:textColor="@color/text_color"
         android:textSize="32sp"
@@ -78,7 +78,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:backgroundTint="@color/button_color"
+            android:backgroundTint="#825513"
             android:padding="12dp"
             android:text="@string/field_reset_password"
             android:textColor="@color/button_text_color"

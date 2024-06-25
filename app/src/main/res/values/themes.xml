@@ -2,16 +2,37 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.FInalDOAN" parent="Theme.MaterialComponents.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-        <item name="android:windowBackground">#ECF4D6</item>
+        <item name="android:windowBackground">#FFF8F4</item>
         <item name="android:colorBackground">#ECF4D6</item>
-        <item name="android:statusBarColor">#2D9596</item>
-<!--        <item name="bottomSheetDialogTheme">@style/Theme.Design.Light.BottomSheetDialog</item>-->
+        <item name="android:statusBarColor">#DBD4D1 </item>
+<!--        <item name="android:itemBackground">#FFF8F4</item>-->
+<!--        <item name="itemTextAppearance">@style/CustomTextMenu</item>-->
+    </style>
+
+    <style name="CustomTextMenu" parent="@android:style/TextAppearance.Widget.IconMenu.Item">
+        <item name="android:textColor">#000</item>
+    </style>
+    <style name="CustomMaterial3Theme" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Tùy chỉnh thêm nếu cần -->
+    </style>
+<!--    <style name="CustomBottomSheetDialog" parent="Theme.Design.Light.BottomSheetDialog">-->
+<!--        <item name="bottomSheetStyle">@style/CustomBottomSheet</item>-->
+<!--    </style>-->
+<!--    <style name="CustomBottomSheetDialog" parent="@style/Widget.Design.BottomSheet.Modal">-->
+<!--        <item name="android:background">@drawable/rounded_corner_top</item>-->
+<!--    </style>-->
+
+
+    <style name="CustomBottomSheet" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.1</item>
     </style>
     <style name="Theme.Design.Light.BottomSheetDialog" parent="Base.Theme.FInalDOAN">
         <item name="android:windowSoftInputMode">adjustResize</item>
     </style>
+
     <style name="Theme.FInalDOAN" parent="Base.Theme.FInalDOAN" />
+
     <style name="CalendarWidgetHeader">
         <item name="android:textSize">25sp</item>
         <item name="android:textStyle">bold</item>
@@ -29,10 +50,10 @@
         <item name="android:textSize">22sp</item>
         <item name="android:textStyle">bold</item>
     </style>
+
     <style name="Theme.ButtomNavigation" parent="Base.Theme.FInalDOAN" />
 
     <style name="App.Custom.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator" >
         <item name="android:color">#332D9596</item>
     </style>
-
 </resources>

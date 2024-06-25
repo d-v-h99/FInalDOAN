@@ -4,50 +4,58 @@
     android:id="@+id/relativelayoutfragmentoneday"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFF8F4"
     tools:context=".fragment.OneDayFragment">
 
-    <TextView
-        android:id="@+id/day"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_marginTop="65dp"
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="85dp"
-        android:textColor="#825513"
-        android:textSize="160sp"
-        android:textStyle="bold" />
+        android:backgroundTint="@color/white"
+        android:background="@drawable/rounded_corner">
 
-    <TextView
-        android:id="@+id/weekdayString"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="273dp"
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="70dp"
+            android:src="@drawable/img11" />
 
-        android:textColor="#4A454D"
-        android:textSize="25sp"
-        android:textStyle="bold" />
+        <TextView
+            android:id="@+id/day"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="235dp"
+            android:textColor="#825513"
+            android:textSize="140sp"
+            android:textStyle="bold"
+            tools:text="ABC" />
 
+        <TextView
+            android:id="@+id/weekdayString"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="395dp"
+            android:textColor="#4A454D"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            tools:text="ABC" />
+
+    </RelativeLayout>
     <TextView
         android:id="@+id/quotes"
         android:layout_width="367dp"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="290dp"
+        android:layout_marginBottom="240dp"
         android:gravity="center"
+        tools:text="ABC"
         android:textColor="#825513"
         android:textSize="18sp"
         android:textStyle="italic" />
-
-    <TextView
-        android:id="@+id/lunar_date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="24dp"
-        android:text="" />
 
 </RelativeLayout>

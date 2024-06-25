@@ -42,7 +42,7 @@ class TaskAdapter(
                 holder.imageView.visibility = View.VISIBLE
                 holder.titleTextView.paintFlags =
                     holder.titleTextView.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                holder.imageView.setImageResource(R.drawable.ic_task_vector) // Hoặc biểu tượng "Hoàn thành" khác nếu có
+                holder.imageView.setImageResource(R.drawable.radiocheck) // Hoặc biểu tượng "Hoàn thành" khác nếu có
                 holder.titleTextView.setTextColor(
                     ContextCompat.getColor(
                         holder.itemView.context,

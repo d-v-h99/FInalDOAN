@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFF1E5"
     tools:context=".MainActivity">
 
     <FrameLayout
@@ -38,7 +39,7 @@
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:backgroundTint="#FFDDB8"
+        android:backgroundTint="#825513"
         android:src="@drawable/plus"
         app:layout_anchor="@id/bottomAppBar"
         app:maxImageSize="35dp"

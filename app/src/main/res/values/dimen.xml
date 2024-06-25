@@ -1,4 +1,7 @@
 <resources>
     <dimen name="standard_55">55dp</dimen>
     <dimen name="standard_105">105dp</dimen>
+    <dimen name="custom_corner_radius">25dp</dimen>
+    <dimen name="custom_peek_height">250dp</dimen>
+    <dimen name="expanded_height">430dp</dimen>
 </resources>

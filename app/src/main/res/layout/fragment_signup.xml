@@ -4,15 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#9E6565"
+    android:backgroundTint="#FFF1E5"
     tools:context=".fragment.signupFragment">
     <TextView
         android:id="@+id/tvSignupHeading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="32dp"
-
-        android:text="Create account"
+        android:textStyle="bold"
+        android:text="Đăng ký"
         android:textColor="@color/text_color"
         android:textSize="32sp"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
 
-        android:text="xxx"
+        android:text=""
         android:textColor="@color/subheading_color"
         app:layout_constraintLeft_toLeftOf="@+id/tvSignupHeading"
         app:layout_constraintRight_toRightOf="@+id/tvSignupHeading"
@@ -47,7 +47,8 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/field_username"
+            android:hint="User name"
+            android:textColorHint="@color/black"
             app:boxStrokeColor="@color/box_stroke_color"
             app:errorEnabled="true"
             app:hintTextColor="@color/text_color"
@@ -68,7 +69,8 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/field_email"
+            android:hint="Email"
+            android:textColorHint="@color/black"
             app:boxStrokeColor="@color/box_stroke_color"
             app:errorEnabled="true"
             app:hintTextColor="@color/text_color"
@@ -89,7 +91,8 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/field_password"
+            android:hint="Password"
+            android:textColorHint="@color/black"
             app:boxStrokeColor="@color/box_stroke_color"
             app:endIconMode="password_toggle"
             app:errorEnabled="true"
@@ -111,11 +114,10 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginVertical="16dp"
-            android:backgroundTint="@color/button_color"
-
+            android:backgroundTint="#825513"
             android:padding="12dp"
-            android:text="@string/field_signup"
-            android:textColor="@color/button_text_color"
+            android:text="Đăng ký"
+            android:textColor="@color/white"
             android:textSize="16sp"
             app:cornerRadius="6dp" />
 
@@ -124,7 +126,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@string/login_prompt"
+            android:text="Bạn đã có tài khoản? Đăng nhâp"
             android:textColor="@color/text_color"
             android:textSize="14sp" />
     </LinearLayout>

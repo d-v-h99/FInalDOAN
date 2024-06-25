@@ -1,20 +1,25 @@
 package com.hoangdoviet.finaldoan.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.airbnb.lottie.LottieAnimationView
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.model.Message
 import com.hoangdoviet.finaldoan.utils.Constants.RECEIVE_ID
 import com.hoangdoviet.finaldoan.utils.Constants.SEND_ID
 
 class MessageAdapter : RecyclerView.Adapter<MessageAdapter.MyViewHolder>() {
-    var messageList   = mutableListOf<Message>()
+    var messageList = mutableListOf<Message>()
+    private var isLoading = false
+
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tv_message: TextView = itemView.findViewById(R.id.tv_message)
         val tv_bot_message: TextView = itemView.findViewById(R.id.tv_bot_message)
+        val animationView: LottieAnimationView = itemView.findViewById(R.id.animationView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
@@ -23,29 +28,47 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.MyViewHolder>() {
         )
     }
 
-    override fun getItemCount(): Int = messageList.size
+    override fun getItemCount(): Int = messageList.size + if (isLoading) 1 else 0
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        val currentMessage = messageList[position]
-        when(currentMessage.id){
-            SEND_ID -> {
-                holder.tv_message.apply {
-                    text = currentMessage.message
-                    visibility = View.VISIBLE
-                }
-                holder.tv_bot_message.visibility = View.GONE
+        if (position == messageList.size) {
+            holder.tv_message.visibility = View.GONE
+            holder.tv_bot_message.visibility = View.GONE
+            holder.animationView.apply {
+                visibility = View.VISIBLE
+                setAnimation("dott1.json")
+                playAnimation()
             }
-            RECEIVE_ID -> {
-                holder.tv_bot_message.apply {
-                    text = currentMessage.message
-                    visibility = View.VISIBLE
+        } else {
+            val currentMessage = messageList[position]
+            holder.animationView.visibility = View.GONE
+
+            when (currentMessage.id) {
+                SEND_ID -> {
+                    holder.tv_message.apply {
+                        text = currentMessage.message
+                        visibility = View.VISIBLE
+                    }
+                    holder.tv_bot_message.visibility = View.GONE
                 }
-                holder.tv_message.visibility = View.GONE
+                RECEIVE_ID -> {
+                    holder.tv_bot_message.apply {
+                        text = currentMessage.message
+                        visibility = View.VISIBLE
+                    }
+                    holder.tv_message.visibility = View.GONE
+                }
             }
         }
     }
+
     fun insertMessage(message: Message) {
         messageList.add(message)
         notifyItemInserted(messageList.size)
+    }
+
+    fun setLoading(loading: Boolean) {
+        isLoading = loading
+        notifyDataSetChanged()
     }
 }

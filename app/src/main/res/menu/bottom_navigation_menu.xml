@@ -13,11 +13,11 @@
         android:title=""/>
 
     <item android:title="Nhiệm vụ"
-        android:icon="@drawable/elements"
+        android:icon="@drawable/task01"
         android:id="@+id/TaskFragment"/>
 
-    <item android:title="Cài đặt"
-        android:icon="@drawable/iconsetting"
+    <item android:title="Cá nhân"
+        android:icon="@drawable/user"
         android:id="@+id/profileFragment"/>
 
 </menu>

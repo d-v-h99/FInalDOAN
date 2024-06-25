@@ -5,6 +5,8 @@ import android.app.Dialog
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -16,13 +18,25 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
-import android.widget.Toast
+import androidx.appcompat.view.ContextThemeWrapper
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
+import androidx.lifecycle.Observer
+import com.andrefrsousa.superbottomsheet.SuperBottomSheetFragment
 import com.bigkoo.pickerview.builder.TimePickerBuilder
 import com.bigkoo.pickerview.view.TimePickerView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.api.client.extensions.android.http.AndroidHttp
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.util.DateTime
+import com.google.api.client.util.ExponentialBackOff
+import com.google.api.services.calendar.CalendarScopes
+import com.google.api.services.calendar.model.EventDateTime
+import com.google.api.services.calendar.model.EventReminder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -30,27 +44,40 @@ import com.hoangdoviet.finaldoan.AlarmReceiver
 import com.hoangdoviet.finaldoan.MainActivity
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.databinding.FragmentEventBinding
-import com.hoangdoviet.finaldoan.databinding.FragmentOneDayBinding
 import com.hoangdoviet.finaldoan.model.Event
+import com.hoangdoviet.finaldoan.model.EventCreator
 import com.hoangdoviet.finaldoan.utils.RepeatMode
 import com.hoangdoviet.finaldoan.utils.addYearsToDate
 import com.hoangdoviet.finaldoan.utils.showToast
+import com.hoangdoviet.finaldoan.viewmodel.UserGoogleViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
-class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatModeSelectedListener {
+class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatModeSelectedListener {
     private lateinit var binding: FragmentEventBinding
     private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val mFirestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
-     var textDatePicker: String =""
+    var textDatePicker: String = ""
     lateinit var timeStart: String
     lateinit var timeEnd: String
     var idRadio: Int = 0
     lateinit var eventDelete: Event
     private var position: Int = -1
+    private val userViewModel: UserGoogleViewModel by activityViewModels()
+    private var checklogin = false
+    private var mCredential: GoogleAccountCredential? = null
+
+    override fun animateStatusBar() = false  // Tắt animation cho status bar
+    override fun getStatusBarColor() = Color.TRANSPARENT  // Đặt màu status bar là trong suốt
+
+    //        override fun getExpandedHeight() = SuperBottomSheetFragment.ExpandedHeight.MATCH_PARENT
+    override fun getDim() = 0.4f
+    override fun isSheetAlwaysExpanded() = true
+    override fun getExpandedHeight(): Int = resources.getDimensionPixelSize(R.dimen.expanded_height)
+    override fun getCornerRadius() = resources.getDimension(R.dimen.custom_corner_radius)
 //    override fun onCreate(savedInstanceState: Bundle?) {
 //        super.onCreate(savedInstanceState)
 //        arguments?.let {
@@ -71,13 +98,16 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                 }
             }
     }
+//    override fun getTheme(): Int {
+//        return R.style.CustomBottomSheetDialog
+//    }
 
     private val datePicker by lazy {
         val picker = TimePickerBuilder(requireContext()) { date, v ->
-            val formattedDate = formatDate(date,true)
+            val formattedDate = formatDate(date, false)
             Log.i("pvTime", "$formattedDate")
             binding.valueDate.text = formattedDate
-            textDatePicker = formatDate(date,false)
+            textDatePicker = formatDate(date, false)
         }
             .setType(booleanArrayOf(true, true, true, false, false, false))
             .isDialog(true) //默认设置false ，内部实现将DecorView 作为它的父控件。
@@ -105,38 +135,55 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         }
         picker
     }
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-        return dialog
-    }
+
+//    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+//        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+//        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+//        return dialog
+//    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        super.onCreateView(inflater, container, savedInstanceState)
+        // Áp dụng CustomMaterial3Theme cho Fragment này
+//        val contextThemeWrapper = ContextThemeWrapper(requireContext(), R.style.CustomMaterial3Theme)
+//        val localInflater = inflater.cloneInContext(contextThemeWrapper)
         binding = FragmentEventBinding.inflate(inflater, container, false)
         return binding.root
     }
+
     private fun populateEventDetails(event: Event) {
         binding.valueTitle.setText(event.title)
         binding.valueDate.text = event.date
         binding.valueDateStart.text = event.timeStart
         binding.valueDateEnd.text = event.timeEnd
-        binding.value4.text = when(event.repeat){
-            0->"Không bao giờ"
-            1->"Hàng ngày"
-            2->"Ngày làm việc"
-            3->"Hàng tuần"
-            4->"Hàng tháng"
+        binding.value4.text = when (event.repeat) {
+            0 -> "Không bao giờ"
+            1 -> "Hàng ngày"
+            2 -> "Ngày làm việc"
+            3 -> "Hàng tuần"
+            4 -> "Hàng tháng"
             else -> "Hàng năm"
         }
         binding.btnSave.text = "Sửa sự kiện"
         binding.button2.text = "Xoá sự kiện"
         // Thiết lập các chi tiết sự kiện khác nếu cần
     }
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkAndRequestExactAlarmPermission()
+        initCredentials()
+        val (timeStart1, timeEnd1, date) = getCurrentTimeAndDate()
+        textDatePicker = formatDate(date, false)
+        binding.valueDate.text = formatDate(date, false)
+
+        binding.valueDateStart.text = timeStart1
+        binding.valueDateEnd.text = timeEnd1
+
         arguments?.getParcelable<Event>("event")?.let { event ->
             populateEventDetails(event)
             eventDelete = event
@@ -166,60 +213,90 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
             dialog.show(parentFragmentManager, "RepeatModeFragment")
         }
         binding.btnSave.setOnClickListener {
-            if(binding.btnSave.text == "Xác nhận"){
+            if (binding.btnSave.text == "Xác nhận") {
                 try {
                     val currentUserUid = mAuth.currentUser?.uid
                     if (currentUserUid == null) {
                         showToast(requireContext(), "User is not logged in.")
                         return@setOnClickListener
                     }
+                    val title = binding.valueTitle.text.toString()
+                    val timeStart = binding.valueDateStart.text.toString()
+                    val timeEnd = binding.valueDateEnd.text.toString()
+                    if (title.isEmpty()) {
+                        showToast(requireContext(), "Tiêu đề không được để trống")
+                        return@setOnClickListener
+                    }
+                    if (!isTimeEndAfterTimeStart(timeStart, timeEnd)) {
+                        showToast(requireContext(), "Giờ kết thúc phải lớn hơn giờ bắt đầu")
+                        return@setOnClickListener
+                    }
 
                     val event = Event(
                         eventID = generateEventId(),
                         date = textDatePicker,
-                        title = binding.valueTitle.text.toString(),
-                        timeStart = binding.valueDateStart.text.toString(),
-                        timeEnd = binding.valueDateEnd.text.toString(),
+                        title = title,
+                        timeStart = timeStart,
+                        timeEnd = timeEnd,
                         repeat = idRadio
                     )
+                    Log.d("checksave", event.toString())
 
                     if (idRadio == 0) {
                         // Sự kiện đơn lẻ
+                        if (checklogin) {
+                            createCalendarEvent(event, null)
+                        }
                         addSingleEvent(currentUserUid, event)
+
                     } else {
                         // Sự kiện lặp lại
                         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                         val dateStart = dateFormat.parse(event.date)
                         val dateEnd = addYearsToDate(dateStart, 1)
                         val endDateFormatted = dateFormat.format(dateEnd)
-                        val repeatModeClick = when(event.repeat){
-                            1->RepeatMode.Day
-                            2->RepeatMode.WorkDay
-                            3->RepeatMode.Week
-                            4->RepeatMode.Month
+                        val repeatModeClick = when (event.repeat) {
+                            1 -> RepeatMode.Day
+                            2 -> RepeatMode.WorkDay
+                            3 -> RepeatMode.Week
+                            4 -> RepeatMode.Month
                             else -> RepeatMode.Year
                         }
+                        if (checklogin) {
+                            createCalendarEvent(event, event.repeat.toString())
 
-                        addEventWithRepeats(currentUserUid, event, repeatModeClick, endDateFormatted)
+                        }
+
+                        addEventWithRepeats(
+                            currentUserUid,
+                            event,
+                            repeatModeClick,
+                            endDateFormatted
+                        )
                     }
 //                deleteEvent("e0c6c8ef-f673-4d96-b4e8-01bb4aa3cfd0")
 
                 } catch (e: Exception) {
                     Log.e("EventFragment", "Error creating event", e)
                 }
-            }
-            else {
+            } else {
                 val currentUserUid = mAuth.currentUser?.uid
                 val eventupdate = Event(
                     eventID = eventDelete.eventID,
                     date = if (textDatePicker.isNotEmpty()) textDatePicker else eventDelete.date,
-                    title = if (binding.valueTitle.text.toString().isNotEmpty()) binding.valueTitle.text.toString() else eventDelete.title,
-                    timeStart = if (binding.valueDateStart.text.toString().isNotEmpty()) binding.valueDateStart.text.toString() else eventDelete.timeStart,
-                    timeEnd = if (binding.valueDateEnd.text.toString().isNotEmpty()) binding.valueDateEnd.text.toString() else eventDelete.timeEnd,
-                    repeat = idRadio ,
-                    originalEventID =eventDelete.originalEventID
+                    title = if (binding.valueTitle.text.toString()
+                            .isNotEmpty()
+                    ) binding.valueTitle.text.toString() else eventDelete.title,
+                    timeStart = if (binding.valueDateStart.text.toString()
+                            .isNotEmpty()
+                    ) binding.valueDateStart.text.toString() else eventDelete.timeStart,
+                    timeEnd = if (binding.valueDateEnd.text.toString()
+                            .isNotEmpty()
+                    ) binding.valueDateEnd.text.toString() else eventDelete.timeEnd,
+                    repeat = idRadio,
+                    originalEventID = eventDelete.originalEventID
                 )
-                if(eventDelete.originalEventID.isEmpty()){
+                if (eventDelete.originalEventID.isEmpty()) {
                     if (idRadio == 0) {
                         updateEvent(eventupdate)
                     } else {
@@ -228,17 +305,22 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                         val dateStart = dateFormat.parse(eventupdate.date)
                         val dateEnd = addYearsToDate(dateStart, 1)
                         val endDateFormatted = dateFormat.format(dateEnd)
-                        val repeatModeClick = when(eventupdate.repeat){
-                            1->RepeatMode.Day
-                            2->RepeatMode.WorkDay
-                            3->RepeatMode.Week
-                            4->RepeatMode.Month
+                        val repeatModeClick = when (eventupdate.repeat) {
+                            1 -> RepeatMode.Day
+                            2 -> RepeatMode.WorkDay
+                            3 -> RepeatMode.Week
+                            4 -> RepeatMode.Month
                             else -> RepeatMode.Year
                         }
 
-                        addEventWithRepeats(currentUserUid!!, eventupdate, repeatModeClick, endDateFormatted)
+                        addEventWithRepeats(
+                            currentUserUid!!,
+                            eventupdate,
+                            repeatModeClick,
+                            endDateFormatted
+                        )
                     }
-                }else {
+                } else {
 
                     // xu ly sua su kien co lap
                     eventupdate?.let { event ->
@@ -257,15 +339,15 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
 //            deleteFutureRepeatingEvents("5197007d-1143-4182-aae0-5fdbcaf07483")
         }
         binding.button2.setOnClickListener {
-            if(binding.button2.text == "Xoá sự kiện"){
-                if(eventDelete.originalEventID.isNotEmpty()){
+            if (binding.button2.text == "Xoá sự kiện") {
+                if (eventDelete.originalEventID.isNotEmpty()) {
                     //showDeleteEventDialog(eventDelete)
                     eventDelete?.let { event ->
                         val dialog = DeleteEventModeFragment.newInstance(event, position)
                         dialog.setTargetFragment(this, 0)
                         dialog.show(parentFragmentManager, "DeleteEventModeFragment")
                     }
-                }else {
+                } else {
                     deleteEvent(eventDelete.eventID)
                     showToast(requireContext(), "Xoá sự kiẹn thành công")
                     //dismiss()
@@ -278,7 +360,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         setFragmentResultListener("deleteRequestKey") { requestKey, bundle ->
             val position = bundle.getInt("position")
             // Gửi kết quả lại cho MonthFragment
-                setFragmentResult("requestKey", Bundle().apply {
+            setFragmentResult("requestKey", Bundle().apply {
                 putInt("position", position)
                 Log.d("ktraa", position.toString() + " EventModeFragment")
             })
@@ -286,7 +368,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         }
         setFragmentResultListener("requestKey1") { requestKey, bundle ->
             val position = bundle.getInt("position")
-            val event : Event = bundle.getParcelable("event")!!
+            val event: Event = bundle.getParcelable("event")!!
             // Gửi kết quả lại cho MonthFragment
             setFragmentResult("requestUpdate", Bundle().apply {
                 putInt("position", position)
@@ -295,10 +377,42 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
             })
             dismiss()
         }
-
+        userViewModel.isGoogleLoggedIn.observe(viewLifecycleOwner, Observer { isLoggedIn ->
+            checklogin = isLoggedIn
+        })
 
 
     }
+
+    private fun getCurrentTimeAndDate(): Triple<String, String, Date> {
+        val calendar = Calendar.getInstance()
+
+        // Định dạng giờ phút hiện tại
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val timeStart = timeFormat.format(calendar.time)
+
+        // Tăng thêm 30 phút
+        calendar.add(Calendar.MINUTE, 30)
+        val timeEnd = timeFormat.format(calendar.time)
+
+        // Lấy đối tượng Date hiện tại
+        val currentDate = calendar.time
+
+        return Triple(timeStart, timeEnd, currentDate)
+    }
+
+    private fun isTimeEndAfterTimeStart(timeStart: String, timeEnd: String): Boolean {
+        val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+        return try {
+            val startDate = dateFormat.parse(timeStart)
+            val endDate = dateFormat.parse(timeEnd)
+            endDate.after(startDate)
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     private fun checkAndRequestExactAlarmPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = context?.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -308,6 +422,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
             }
         }
     }
+
     private fun setAlarm(event: Event) {
         // Kiểm tra và yêu cầu quyền SCHEDULE_EXACT_ALARM
         checkAndRequestExactAlarmPermission()
@@ -327,7 +442,12 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
 
 
         // Tạo PendingIntent
-        val pendingIntent = PendingIntent.getBroadcast(context, event.eventID.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            event.eventID.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         // Thiết lập thời gian thông báo
         val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -382,8 +502,6 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
     }
 
 
-
-
     fun addSingleEvent(userId: String, event: Event) {
         val db = FirebaseFirestore.getInstance()
         val eventRef = db.collection("Events").document(event.eventID)
@@ -406,6 +524,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                 showToast(requireContext(), "Error adding event: $e")
             }
     }
+
     private fun deleteEvent(eventId: String) {
         val currentUserUid = mAuth.currentUser?.uid
         if (currentUserUid == null) {
@@ -433,6 +552,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                 showToast(requireContext(), "Error deleting event: $e")
             }
     }
+
     private fun updateEvent(event: Event) {
         val currentUserUid = mAuth.currentUser?.uid
         if (currentUserUid == null) {
@@ -473,20 +593,22 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         val db = FirebaseFirestore.getInstance()
         val eventsRef = db.collection("Events")
 
-        eventsRef.whereEqualTo("originalEventID", originalEventID).get().addOnSuccessListener { documents ->
-            val batch = db.batch()
-            documents.forEach { document ->
-                batch.delete(document.reference)
-            }
-            batch.commit().addOnSuccessListener {
-                showToast(requireContext(), "All repeating events deleted successfully")
+        eventsRef.whereEqualTo("originalEventID", originalEventID).get()
+            .addOnSuccessListener { documents ->
+                val batch = db.batch()
+                documents.forEach { document ->
+                    batch.delete(document.reference)
+                }
+                batch.commit().addOnSuccessListener {
+                    showToast(requireContext(), "All repeating events deleted successfully")
+                }.addOnFailureListener { e ->
+                    showToast(requireContext(), "Error deleting repeating events: $e")
+                }
             }.addOnFailureListener { e ->
-                showToast(requireContext(), "Error deleting repeating events: $e")
+                showToast(requireContext(), "Error fetching repeating events: $e")
             }
-        }.addOnFailureListener { e ->
-            showToast(requireContext(), "Error fetching repeating events: $e")
-        }
     }
+
     // xoa chinh sua su kien nay va cac su kien tiep theo
     fun deleteFutureRepeatingEvents(eventID: String) {
         val db = FirebaseFirestore.getInstance()
@@ -525,10 +647,6 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
     }
 
 
-
-
-
-
     fun addEvent(userId: String, event: Event) {
         val db = FirebaseFirestore.getInstance()
         val eventRef = db.collection("Events").document(event.eventID)
@@ -550,6 +668,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
                 showToast(requireContext(), "Error adding event: $e")
             }
     }
+
     fun createRepeatingEvents(event: Event, repeatMode: RepeatMode, endDate: String): List<Event> {
         val events = mutableListOf<Event>()
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -565,7 +684,11 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
             val newEvent = if (currentIndex == 0) {
                 event.copy(eventID = generateEventId(), date = newDate) // Sự kiện gốc
             } else {
-                event.copy(eventID = generateEventId(), date = newDate, originalEventID = originalEventId)
+                event.copy(
+                    eventID = generateEventId(),
+                    date = newDate,
+                    originalEventID = originalEventId
+                )
             }
             if (currentIndex == 0) {
                 originalEventId = newEvent.eventID // Cập nhật lại originalEventId
@@ -584,14 +707,90 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         return events
     }
 
+    //dateString: String, timeStart: String, timeEnd: String
+    private fun initCredentials() {
+        mCredential = GoogleAccountCredential.usingOAuth2(
+            requireContext().applicationContext,
+            arrayListOf(CalendarScopes.CALENDAR)
+        ).setBackOff(ExponentialBackOff())
+        val accountName = requireActivity().getPreferences(Context.MODE_PRIVATE)
+            .getString(profileFragment.PREF_ACCOUNT_NAME, null)
+        if (accountName != null) {
+            mCredential?.selectedAccountName = accountName
+        }
+        Log.d("checkkklogin", mCredential.toString())
+    }
 
+    private fun createCalendarEvent(event: Event, recurrenceType: String?) {
+        try {
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
+            val startDateTimeString = "${event.date} ${event.timeStart}"
+            val endDateTimeString = "${event.date} ${event.timeEnd}"
 
+            val startDate = dateFormat.parse(startDateTimeString)
+            val endDate = dateFormat.parse(endDateTimeString)
+
+            val startDateTime = DateTime(startDate)
+            val endDateTime = DateTime(endDate)
+
+            val event = com.google.api.services.calendar.model.Event()
+                .setSummary(event.title)
+                .setLocation("Hà Nội, Việt Nam")
+                .setDescription("Đặt lịch bởi ứng dụng HoangLich")
+            val start = EventDateTime()
+                .setDateTime(startDateTime)
+                .setTimeZone("Asia/Ho_Chi_Minh")
+            event.start = start
+            val end = EventDateTime()
+                .setDateTime(endDateTime)
+                .setTimeZone("Asia/Ho_Chi_Minh")
+            event.end = end
+            // Thiết lập tái phát
+            val recurrence = when (recurrenceType) {
+                "1" -> listOf("RRULE:FREQ=DAILY;COUNT=10")
+                "3" -> listOf("RRULE:FREQ=WEEKLY;COUNT=10")
+                "4" -> listOf("RRULE:FREQ=MONTHLY;COUNT=10")
+                "5" -> listOf("RRULE:FREQ=YEARLY;COUNT=10")
+                else -> null
+            }
+            recurrence?.let {
+                event.recurrence = it
+            }
+
+            val reminderOverrides = listOf(
+                EventReminder().setMethod("email").setMinutes(24 * 60),
+                EventReminder().setMethod("popup").setMinutes(10)
+            )
+
+            val reminders = com.google.api.services.calendar.model.Event.Reminders()
+                .setUseDefault(false)
+                .setOverrides(reminderOverrides)
+            event.reminders = reminders
+
+            val calendarId = "primary"
+            val transport = AndroidHttp.newCompatibleTransport()
+            val jsonFactory = JacksonFactory.getDefaultInstance()
+            val service = com.google.api.services.calendar.Calendar.Builder(
+                transport, jsonFactory, mCredential
+            )
+                .setApplicationName("Google Calendar API Android Quickstart")
+                .build()
+            Log.d("checkkklogin", mCredential.toString())
+
+            EventCreator(requireContext(),service, calendarId, event).execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            showToast(requireContext(), "Lỗi khi tạo sự kiện: ${e.message}")
+        }
+
+    }
 
 
     fun generateEventId(): String {
         return UUID.randomUUID().toString()
     }
+
     private fun createTimePicker(view: TextView): TimePickerResult {
         var timeFormat = ""
         val picker = TimePickerBuilder(view.context) { date, _ ->
@@ -625,7 +824,8 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         }
         return TimePickerResult(picker, timeFormat)
     }
-    fun formatDate(date: Date,check: Boolean): String {
+
+    fun formatDate(date: Date, check: Boolean): String {
         val dayFormat = SimpleDateFormat("dd", Locale.getDefault())
         val monthFormat = SimpleDateFormat("MM", Locale.getDefault())
         val yearFormat = SimpleDateFormat("yyyy", Locale.getDefault())
@@ -633,10 +833,9 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         val day = dayFormat.format(date)
         val month = monthFormat.format(date)
         val year = yearFormat.format(date)
-        if(check == true){
+        if (check == true) {
             return "Ngày $day tháng $month năm $year"
-        }
-        else return "$day/$month/$year"
+        } else return "$day/$month/$year"
 
     }
 
@@ -644,6 +843,7 @@ class EventFragment : BottomSheetDialogFragment(), RepeatModeFragment.OnRepeatMo
         binding.value4.text = mode
         idRadio = id
     }
+
     data class TimePickerResult(val picker: TimePickerView, val timeFormat: String)
 
 

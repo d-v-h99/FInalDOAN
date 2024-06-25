@@ -67,6 +67,10 @@ class forgotPassFragment : Fragment() {
 
             btnResetPassword.setOnClickListener {
                 val email = etEmail.getInputValue()
+                if(email.isEmpty()){
+                    showToast(requireContext(), "Không được để trống email")
+                    return@setOnClickListener
+                }
                 authViewModel.resendPassword(email)
                 val (isEmailValid, emailError) = InputValidation.isEmailValid(email)
                 if (isEmailValid.not()) {

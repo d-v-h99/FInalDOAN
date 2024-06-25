@@ -8,7 +8,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -46,6 +48,7 @@ import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 
@@ -74,6 +77,11 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
     private val LunarDecorators = mutableListOf<DayViewDecorator>()
     private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private var isWeekView = true
+    private lateinit var dateSelect: CalendarDay
+    private lateinit var todayDecorator: TodayDecorator
+    private var currentDate: CalendarDay = CalendarDay.today()
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -131,14 +139,15 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
 //        }
         if (mAuth.currentUser != null) {
         fetchAllEvents() }
-        binding.more.setOnClickListener {
-            toggleCalendarView()
-        }
         childFragmentManager.setFragmentResultListener("requestKey",viewLifecycleOwner){requestKey, bundle ->
             val position = bundle.getInt("position")
             // Gửi kết quả lại cho MonthFragment
             Log.d("ktraa", position.toString() + " MonthFragment")
+            if(position==0){
+                removeEventsForDate(dateSelect)
+            }
             eventListAdapter.removeEventAt(position)
+
 
 
         }
@@ -275,6 +284,8 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
         dialog.show()
     }
 
+
+
     private fun updateHolidays(month: Int) {
         val holidaysForMonth = holidays[month] ?: emptyList()
         holidaysAdapter.updateHolidays(holidaysForMonth)
@@ -310,11 +321,15 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
         binding.calendarView.setHeaderTextAppearance(R.style.DateTextAppearance)
         binding.calendarView.setDateTextAppearance(R.style.DateTextAppearance)
         binding.calendarView.setWeekDayTextAppearance(R.style.WeekDayTextAppearance)
-        binding.calendarView.addDecorators(TodayDecorator())
+        //todayDecorator.setDate(CalendarDay.today())
+        todayDecorator = TodayDecorator(currentDate)
+            binding.calendarView.addDecorator(todayDecorator)
         binding.calendarView.setWeekDayFormatter(CustomWeekDayFormatter())
         binding.today.setOnClickListener {
             binding.calendarView.setCurrentDate(calendar)  // Quay lại ngày hôm nay
             binding.calendarView.setSelectedDate(calendar) // Đánh dấu ngày hôm nay
+            // Remove the old decorator
+            binding.calendarView.removeDecorator(todayDecorator)
         }
     }
 
@@ -344,15 +359,10 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
         }
     }
 
-    inner class TodayDecorator : DayViewDecorator {
-        val calendar = Calendar.getInstance()
+    inner class TodayDecorator(private var date: CalendarDay) : DayViewDecorator {
 
         override fun shouldDecorate(day: CalendarDay): Boolean {
-            day.copyTo(calendar)
-            val dd = calendar.get(Calendar.DAY_OF_MONTH)
-            val mm = calendar.get(Calendar.MONTH) + 1
-            val yy = calendar.get(Calendar.YEAR)
-            return dd == d && mm == m + 1 && yy == y
+            return day == date
         }
 
         override fun decorate(view: DayViewFacade) {
@@ -427,9 +437,24 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             Log.d("abc", ngayconvat.toString())
             binding.yyyyMAL.text = "$day Tháng $month Âm lịch, năm $ngayconvat"
             binding.yyyyM.text = "Tháng $m - $y"
+           // binding.calendarView.addDecorators(TodayDecorator())
             if (mAuth.currentUser != null) {
             fetchEventsForDate(dateString)
-            removeEventsForDate(p1) }
+                dateSelect = p1
+            }
+            if (p2){
+                // Remove the old decorator
+                binding.calendarView.removeDecorator(todayDecorator)
+
+                // Update the current date
+                currentDate = p1
+
+                // Add the new decorator for the selected date
+                todayDecorator = TodayDecorator(currentDate)
+                    binding.calendarView.addDecorator(todayDecorator)
+                        binding.calendarView.invalidateDecorators()
+            }
+
         }
     }
 

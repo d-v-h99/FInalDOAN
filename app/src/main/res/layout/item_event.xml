@@ -1,23 +1,40 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:background="#FFF"
+    android:padding="5dp">
 
-    <TextView
-        android:id="@+id/eventTitle"
-        android:layout_width="wrap_content"
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Event Title"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:textStyle="bold" />
+        android:orientation="vertical"
 
-    <TextView
-        android:id="@+id/eventTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Event Time"
-        android:textColor="@color/black"
-        android:textSize="14sp" />
-</LinearLayout>
+        android:padding="12dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <TextView
+            android:id="@+id/eventTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:text="Name Here"
+            android:textSize="16sp"
+            android:textColor="#252525"/>
+
+        <TextView
+            android:id="@+id/eventTime"
+            android:layout_below="@+id/eventTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_marginTop="2dp"
+            android:text="Email Here"
+            android:textSize="12sp"
+            android:textColor="#858585" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

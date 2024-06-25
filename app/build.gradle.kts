@@ -2,10 +2,10 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     id("com.chaquo.python")
-    id("com.google.gms.google-services")
     id("androidx.navigation.safeargs")
     id ("kotlin-kapt")
     id ("kotlin-parcelize")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -55,6 +55,14 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    configurations {
+        implementation {
+            exclude(module = "guava-jdk5")
+        }
+        all {
+            exclude(group = "com.google.guava", module = "listenablefuture")
+        }
+    }
 }
 
 dependencies {
@@ -67,7 +75,7 @@ dependencies {
     implementation(libs.androidx.core)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.database.ktx)
+    implementation(libs.firebase.database)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -92,7 +100,14 @@ dependencies {
     //
     implementation ("it.xabaras.android:recyclerview-swipedecorator:1.4")
     //
-    implementation ("androidx.work:work-runtime-ktx:2.7.1")
-    //
-
+    implementation ("com.google.android.gms:play-services-auth:15.0.0")
+    implementation("com.google.api-client:google-api-client-android:1.23.0") {
+        exclude(group = "org.apache.httpcomponents")
+    }
+    implementation("com.google.apis:google-api-services-calendar:v3-rev310-1.23.0") {
+        exclude(group = "org.apache.httpcomponents")
+        exclude(group = "com.google.guava")
+    }
+    implementation ("pub.devrel:easypermissions:1.2.0")
+    implementation ("com.github.andrefrsousa:SuperBottomSheet:2.0.0")
 }
