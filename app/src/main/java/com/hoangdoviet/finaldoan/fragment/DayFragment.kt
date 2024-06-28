@@ -64,8 +64,21 @@ class DayFragment : Fragment() {
     private fun setDate() {
         CoroutineScope(Dispatchers.Main).launch {
             val dates = withContext(Dispatchers.IO) {
-                DateManager.loadDatesFromAssets(requireContext())
+                if (isAdded) {
+                    DateManager.loadDatesFromAssets(requireContext())
+                } else {
+                    Log.e("DayFragment", "Fragment not attached to context")
+                    emptyList<String>()
+                }
             }
+
+            if (dates.isEmpty()) {
+                Log.e("DayFragment", "No dates loaded")
+                return@launch
+            }
+
+            val datesArrayList = ArrayList(dates)
+
             // Tính toán indexFinded sau khi dates được tải
             wd = currentDate.get(Calendar.DAY_OF_WEEK)
             d = currentDate.get(Calendar.DAY_OF_MONTH)
@@ -74,11 +87,14 @@ class DayFragment : Fragment() {
             thoiGianConVat = ThoiGianConVat(null)
             ngayConVat = thoiGianConVat.getNgayConVat(d, m, y)
             today = """{"weekday": "$wd", "day": "$d", "month": "$m", "year": "$y"}"""
-            indexFinded = findIndexFromPosition(today, 19868, dates)
+            indexFinded = findIndexFromPosition(today, 19868, datesArrayList)
             Log.d("vi tri", indexFinded.toString())
-            setupViewPager(dates)
+            setupViewPager(datesArrayList)
         }
     }
+
+
+
 
     private fun findIndexFromPosition(target: String, startPos: Int, list: List<String>): Int {
         for (i in startPos until list.size) {

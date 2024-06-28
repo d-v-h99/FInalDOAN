@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
@@ -64,16 +65,28 @@ class MainActivity : AppCompatActivity() {
            supportFragmentManager.beginTransaction().add(R.id.frame_layout, profileFragment).commit()
 
        }
-        // Kiểm tra Intent để mở MonthFragment và truyền dữ liệu
-        intent?.let {
-            val targetFragment = it.getStringExtra("TARGET_FRAGMENT")
-            val eventDate = it.getStringExtra("EVENT_DATE")
+        // Kiểm tra xem activity được mở từ thông báo hay không
+        val eventDate = intent.getStringExtra("EVENT_DATE")
+        val targetFragment = intent.getStringExtra("TARGET_FRAGMENT")
+        Log.d("MainActivity", "onCreate: eventDate=$eventDate, targetFragment=$targetFragment")
 
-            if (targetFragment == "MonthFragment" && eventDate != null) {
-                replaceFragment(MonthFragment())
-            }
+        if (targetFragment == "MonthFragment" && eventDate != null) {
+            openMonthFragment(eventDate)
         }
 
+    }
+    private fun openMonthFragment(dateString: String) {
+        val monthFragment = MonthFragment()
+
+        // Truyền dữ liệu đến MonthFragment
+        val bundle = Bundle()
+        bundle.putString("EVENT_DATE", dateString)
+        monthFragment.arguments = bundle
+
+        Log.d("MainActivity", "openMonthFragment: dateString=$dateString")
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.frame_layout, monthFragment)
+            .commit()
     }
 
     // }

@@ -10,4 +10,3 @@ def title(url):
     article.download()
     article.parse()
     return article.title
-num = 5

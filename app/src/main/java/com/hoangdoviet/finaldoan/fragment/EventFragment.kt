@@ -434,12 +434,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
             putExtra("EVENT_TITLE", event.title)
             putExtra("EVENT_DATE", event.date)
         }
-        // Tạo Intent để mở MainActivity và truyền dữ liệu
-        val intent1 = Intent(context, MainActivity::class.java).apply {
-            putExtra("EVENT_DATE", event.date)
-            putExtra("TARGET_FRAGMENT", "MonthFragment")
-        }
-
 
         // Tạo PendingIntent
         val pendingIntent = PendingIntent.getBroadcast(
@@ -448,6 +442,8 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        Log.d("EventFragment", "setAlarm: Setting alarm for event ${event.title} on ${event.date}")
 
         // Thiết lập thời gian thông báo
         val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -460,10 +456,14 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                 add(Calendar.MINUTE, -15) // Trừ đi 15 phút
             }
 
+            Log.d("EventFragment", "setAlarm: Alarm set for ${calendar.time}")
+
             // Đặt thông báo
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
+
+
 
 
     //    private fun showDeleteEventDialog(event: Event) {

@@ -149,6 +149,26 @@ object DateScheduler {
     }
 
     fun findTimeReferences(sentence: String): String? {
+        // Nhận diện mẫu giờ cụ thể với từ chỉ buổi
+        val specificTimeWithPeriodPattern = Pattern.compile("\\b\\d{1,2}:\\d{2}\\s*(sáng|chiều|tối|đêm)?\\b", Pattern.CASE_INSENSITIVE)
+        val specificTimeWithPeriodMatcher = specificTimeWithPeriodPattern.matcher(sentence)
+
+        while (specificTimeWithPeriodMatcher.find()) {
+            val timeString = specificTimeWithPeriodMatcher.group()
+            val parts = timeString.split(" ")
+            val timePart = parts[0]
+            val period = if (parts.size > 1) parts[1].toLowerCase() else ""
+
+            val (hour, minute) = timePart.split(":").map { it.toInt() }
+
+            return when (period) {
+                "sáng" -> String.format("%02d:%02d", hour, minute)
+                "chiều", "tối", "đêm" -> String.format("%02d:%02d", if (hour < 12) hour + 12 else hour, minute)
+                else -> timePart
+            }
+        }
+
+        // Nhận diện mẫu giờ cụ thể không có từ chỉ buổi
         val specificTimePattern = Pattern.compile("\\b\\d{1,2}:\\d{2}\\b", Pattern.CASE_INSENSITIVE)
         val specificTimeMatcher = specificTimePattern.matcher(sentence)
 
@@ -156,6 +176,7 @@ object DateScheduler {
             return specificTimeMatcher.group()
         }
 
+        // Nhận diện các trường hợp đặc biệt như "3 giờ sáng", "3 giờ chiều", v.v.
         val specialCasesPattern = Pattern.compile("\\b(\\d{1,2})\\s*giờ\\s*(sáng|chiều|tối|đêm)\\b", Pattern.CASE_INSENSITIVE)
         val specialCasesMatcher = specialCasesPattern.matcher(sentence)
 
@@ -185,6 +206,7 @@ object DateScheduler {
 
         return null
     }
+
 
 
     fun getStringAfterKeyword(sentence: String, keyword: String = "nội dung"): String {

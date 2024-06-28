@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.google.ai.client.generativeai.GenerativeModel
 import com.hoangdoviet.finaldoan.databinding.HolidayItemBinding
 import com.hoangdoviet.finaldoan.model.Holiday
 

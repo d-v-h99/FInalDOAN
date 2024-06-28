@@ -95,9 +95,17 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             val dateString = String.format("%02d/%02d/%04d", day, month, year)
             fetchEventsForDate(dateString)
         }
-        arguments?.getString("EVENT_DATE")?.let { date ->
-            fetchEventsForDate(date)
+//        arguments?.getString("EVENT_DATE")?.let { date ->
+//            fetchEventsForDate(date)
+//        }
+        // Nhận dữ liệu từ MainActivity
+        val eventDate = arguments?.getString("EVENT_DATE")
+        Log.d("MonthFragment", "onCreateView: eventDate=$eventDate")
+        eventDate?.let {
+            fetchEventsForDate(it)
+//            showToast(requireContext(), "THong baooo")
         }
+
 
         return binding.root
     }

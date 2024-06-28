@@ -77,6 +77,7 @@ import java.util.UUID
 
 
 class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
+
     lateinit var binding: ActivityMain2Binding
     lateinit var adapter: MessageAdapter
     lateinit var tts: TextToSpeech
@@ -255,8 +256,8 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun setUiRecognition() {
         // setup Speech Recognition
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-        binding.recognitionView!!.setSpeechRecognizer(speechRecognizer)
-        binding.recognitionView!!.setRecognitionListener(object : RecognitionListenerAdapter() {
+        binding.recognitionView.setSpeechRecognizer(speechRecognizer)
+        binding.recognitionView.setRecognitionListener(object : RecognitionListenerAdapter() {
             override fun onResults(results: Bundle) {
                 finishRecognition()
                 val matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
@@ -268,7 +269,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         })
 
 
-        binding.recognitionView!!.setOnClickListener {
+        binding.recognitionView.setOnClickListener {
             finishRecognition()
             speechRecognizer.stopListening()
         }
@@ -919,7 +920,6 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
                         val type = row.select("td.type").text()
                         val buyPrice = row.select("td:eq(1)").text()
                         val sellPrice = row.select("td:eq(2)").text()
-                        // In thông tin ra Logcat
                         Log.d(
                             "TrichXuat",
                             "Loại vàng: $type - Giá mua: $buyPrice - Giá bán: $sellPrice"
@@ -1087,19 +1087,13 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
     }
 
     private fun alarm(text: String) {
-        if (text.contains(":")) {
-            val ls = text.split(" ")
-            val lstemp = ls[ls.size - 1].split(":")
-            val hour = lstemp[0].toInt()
-            val minutes = lstemp[1].toInt()
-
+        val text = DateScheduler.findTimeReferences(text)
+            val ls = text?.split(" ")
+            val lstemp = ls?.get(ls.size - 1)?.split(":")
+            val hour = lstemp?.get(0)?.toInt()
+            val minutes = lstemp?.get(1)?.toInt()
+            if(hour != null && minutes != null)
             createAlarm(hour, minutes)
-        } else {
-            val ls = text.split(" ")
-            val hour = ls[ls.size - 2].toInt()
-            val minutes = 0
-            createAlarm(hour, minutes)
-        }
     }
 
     private fun createAlarm(hour: Int, minutes: Int) {

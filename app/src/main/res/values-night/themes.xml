@@ -1,7 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.FInalDOAN" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.FInalDOAN" parent="Theme.MaterialComponents.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="android:windowBackground">#FFF8F4</item>
+        <item name="android:colorBackground">#ECF4D6</item>
+        <item name="android:statusBarColor">#DBD4D1 </item>
     </style>
 </resources>

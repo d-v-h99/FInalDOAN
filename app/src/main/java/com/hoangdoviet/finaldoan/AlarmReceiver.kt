@@ -1,18 +1,21 @@
 package com.hoangdoviet.finaldoan
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
+import android.app.*
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.hoangdoviet.finaldoan.MainActivity
+import com.hoangdoviet.finaldoan.R
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         val title = intent?.getStringExtra("EVENT_TITLE") ?: "No Title"
         val eventDate = intent?.getStringExtra("EVENT_DATE") ?: "No Date"
+
+        Log.d("AlarmReceiver", "onReceive: title=$title, eventDate=$eventDate")
 
         val content = "Sự kiện $title sẽ xảy ra trong 15 phút nữa"
         showNotification(context, title, content, eventDate)
@@ -45,6 +48,8 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        Log.d("AlarmReceiver", "showNotification: Creating notification for eventDate=$eventDate")
+
         val notification = NotificationCompat.Builder(context!!, channelId)
             .setSmallIcon(R.drawable.ic_notification) // Đặt icon cho thông báo
             .setContentTitle("Thông báo sự kiện")
@@ -57,3 +62,4 @@ class AlarmReceiver : BroadcastReceiver() {
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
     }
 }
+
