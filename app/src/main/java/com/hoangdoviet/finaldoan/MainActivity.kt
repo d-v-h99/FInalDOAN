@@ -1,34 +1,26 @@
 package com.hoangdoviet.finaldoan
 
 
+import android.Manifest
 import android.app.Dialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
-import android.view.MenuItem
-import android.view.View
 import android.view.ViewGroup
 import android.view.Window
-import android.view.WindowManager
 import android.widget.RelativeLayout
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.navArgs
-import androidx.navigation.navArgs
-import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hoangdoviet.finaldoan.databinding.ActivityMainBinding
 import com.hoangdoviet.finaldoan.fragment.DayFragment
 import com.hoangdoviet.finaldoan.fragment.EventFragment
 import com.hoangdoviet.finaldoan.fragment.FormTaskFragment
 import com.hoangdoviet.finaldoan.fragment.MonthFragment
-import com.hoangdoviet.finaldoan.fragment.RepeatModeFragment
 import com.hoangdoviet.finaldoan.fragment.TaskFragment
 import com.hoangdoviet.finaldoan.fragment.profileFragment
 import com.hoangdoviet.finaldoan.model.LoginUiState
@@ -36,11 +28,20 @@ import com.hoangdoviet.finaldoan.model.LoginUiState
 class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
     //private var isFabOpen = false
+    private val permissions = arrayOf(
+        Manifest.permission.INTERNET,
+        Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.CALL_PHONE,
+        Manifest.permission.READ_CONTACTS,
+        Manifest.permission.SET_ALARM
+    )
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        requestPermission()
         binding.bottomNavigationView.background = null
         //binding.navView.menu.getItem(1).isEnabled = false
         replaceFragment(DayFragment())
@@ -75,6 +76,20 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
+    private fun requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val remainingPermissions = mutableListOf<String>()
+            for (permission in permissions) {
+                if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                    remainingPermissions.add(permission)
+                }
+            }
+            if (remainingPermissions.isNotEmpty()) {
+                requestPermissions(remainingPermissions.toTypedArray(), 101)
+            }
+        }
+    }
+
     private fun openMonthFragment(dateString: String) {
         val monthFragment = MonthFragment()
 

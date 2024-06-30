@@ -74,6 +74,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import java.util.regex.Pattern
 
 
 class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -509,17 +510,26 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
 
                     message.toLowerCase().contains("tìm kiếm") -> {
-                        responseText = "Tôi sẽ mở google"
-                        val startIndex = message.indexOf("Tìm kiếm thông tin về")
-                        if (startIndex != -1) {
-                            val substring = message.substring(startIndex)
-                            scope.launch {
-                                delay(1500)
-                                search_google(substring)
-                            }
-                        }
+                        responseText = "Tôi sẽ mở Google"
+                        val keywordPattern = "tìm kiếm thông tin về\\s*(.+)"
+                        val pattern = Pattern.compile(keywordPattern, Pattern.CASE_INSENSITIVE)
+                        val matcher = pattern.matcher(message)
 
+                        if (matcher.find()) {
+                            val searchQuery = matcher.group(1).trim()
+                            if (searchQuery.isNotEmpty()) {
+                                scope.launch {
+                                    delay(1500)
+                                    search_google(searchQuery)
+                                }
+                            } else {
+                                responseText = "Không tìm thấy nội dung tìm kiếm. Vui lòng thử lại.1"
+                            }
+                        } else {
+                            responseText = "Không tìm thấy từ khóa tìm kiếm. Vui lòng thử lại.2"
+                        }
                     }
+
 
                     message.toLowerCase().contains("giá vàngxx") -> {
                         responseText =
@@ -536,7 +546,8 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 //                            getXoSoFromUrlAsync("https://api-xsmb.cyclic.app/api/v1").await()
 //                    }
                     message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("âm lịch")||
-                            message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("ngày rằm")-> {
+                            message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("ngày rằm")||
+                            message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("zzrằm")-> {
                         val Date = DateScheduler.extractLunarDate(message)
                         val time = DateScheduler.findTimeReferences(message)
                         val content = DateScheduler.getStringAfterKeyword(message)
@@ -557,13 +568,14 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     repeat = 0
                                 )
                                 responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
-                              //  if(checklogin) createCalendarEvent(event, null)
+                                if(checklogin) {
+                                    createCalendarEvent(event)
+                                }
                                 addSingleEvent(currentUserUid, event)
 
                             }
                         }catch (e: Exception){
-                            responseText = "Lỗi "+e
-                            Log.d("loii",e.toString())
+                            responseText = "Đăng nhập để sử dụng tính năng trên"
                         }
                     }
                     message.toLowerCase().contains("đặt lịch") -> {
@@ -597,7 +609,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                             }
 
                         }catch (e: Exception){
-                            responseText = "Lỗi "+e
+                            responseText = "Đăng nhập để sử dụng tính năng trên"
                         }
                     }
                     message.toLowerCase().contains("hôm nay") && message.toLowerCase().contains("sự kiện") -> {
