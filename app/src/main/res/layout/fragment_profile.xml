@@ -4,44 +4,225 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragment.profileFragment"
-    android:background="#FFF"
+    android:background="#FFF8F4"
     android:orientation="vertical">
 
     <!-- TODO: Update blank fragment layout -->
+
     <TextView
         android:id="@+id/username"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="45dp"
+        android:background="#E1C6BA"
         android:textColor="@color/black"
-        android:text="Profile" />
+        android:text="Cá nhân"
+        android:textStyle="bold"
+        android:textSize="30dp"
+        android:paddingStart="25dp"
+        android:gravity="center_vertical"/>
+        <!-- Đường gạch ngang -->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:background="#000000" />-->
+    <LinearLayout
+        android:id="@+id/deleteAllEvent"
+        android:paddingTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="15dp"
+        android:visibility="gone"
+        android:orientation="horizontal" >
 
-    <Button
-        android:id="@+id/btnLogin"
-        android:layout_width="wrap_content"
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            android:src="@drawable/event_delete" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Xoá tất cả sự kiện"
+            android:textColor="@color/black"
+            android:textSize="17sp"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/deleteAllTask"
+
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Đăng nhập" />
+        android:paddingStart="15dp"
+        android:visibility="gone"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            android:src="@drawable/task_delete" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Xoá tất cả nhiệm vụ"
+            android:textColor="@color/black"
+            android:textSize="17sp"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/lienketGoogle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="15dp"
+        android:visibility="gone"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            android:src="@drawable/icongoogle" />
+
+        <TextView
+            android:id="@+id/txtlienketGoogle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Liên kết Google Calendar API"
+            android:textColor="@color/black"
+            android:textSize="17sp"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/mailDev"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="15dp"
+        android:paddingBottom="15dp"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            android:src="@drawable/icongopy" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Góp ý nhà phát triển"
+            android:textColor="@color/black"
+            android:textSize="17sp"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#000000" />
+    <LinearLayout
+        android:id="@+id/login"
+        android:paddingTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="15dp"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            android:src="@drawable/icondangnhap" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Đăng nhập"
+            android:textColor="@color/black"
+            android:textSize="17sp"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/logout"
+        android:paddingTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="15dp"
+        android:visibility="gone"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            android:src="@drawable/iconthoat" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Đăng xuất"
+            android:textColor="@color/color2"
+            android:textSize="17sp"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/logoutGoogle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="15dp"
+        android:paddingBottom="15dp"
+        android:visibility="gone"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            android:src="@drawable/iconthoattk" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Thoát liên kết tài khoản Google"
+            android:textColor="@color/black"
+            android:textSize="17sp"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+
+<!--    <Button-->
+<!--        android:id="@+id/btnLogin"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Đăng nhập" />-->
 
 
-    <Button
-        android:id="@+id/btnLoginGoogleAPI"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Dang nhap Google" />
-    <Button
-        android:id="@+id/btnAddEvent"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="btnLich" />
-    <Button
-        android:id="@+id/btnLogout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Đăng xuất" />
-    <Button
-        android:id="@+id/btnLogoutGoogle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Thoát liên kết tk Google"
-        android:enabled="false"/>
+<!--    <Button-->
+<!--        android:id="@+id/btnLoginGoogleAPI"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Dang nhap Google" />-->
+<!--    <Button-->
+<!--        android:id="@+id/btnAddEvent"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="btnLich" />-->
+<!--    <Button-->
+<!--        android:id="@+id/btnLogout"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Đăng xuất" />-->
+<!--    <Button-->
+<!--        android:id="@+id/btnLogoutGoogle"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Thoát liên kết tk Google"-->
+<!--        android:enabled="false"/>-->
 
 </LinearLayout>

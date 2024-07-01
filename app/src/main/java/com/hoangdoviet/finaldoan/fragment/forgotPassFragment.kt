@@ -47,6 +47,7 @@ class forgotPassFragment : Fragment() {
                     val successMessage = resendPasswordState.data!!
                     showToast(requireContext(), successMessage)
                     loadingDialog.dismiss()
+                    findNavController().navigate(R.id.action_forgotPassFragment2_to_emailFragment2)
                 }
                 Status.ERROR -> {
                     val errorMessage = resendPasswordState.message!!

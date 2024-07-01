@@ -380,7 +380,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
     }
-
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             val result = tts.setLanguage(Locale("vi", "VN"))

@@ -384,6 +384,7 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
 
     }
 
+
     private fun getCurrentTimeAndDate(): Triple<String, String, Date> {
         val calendar = Calendar.getInstance()
 

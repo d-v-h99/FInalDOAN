@@ -72,10 +72,12 @@ object DateScheduler {
 
 
     fun extractTemporalWords(sentence: String): List<String> {
-        // Biểu thức chính quy để phát hiện các từ chỉ thời gian và ngày
         val sentence = sentence.replace("tư", "tu")
         val temporalPattern = """
-        \b(?:mai|ngày mai|ngày kia|hôm nay|chiều nay|tối nay|buổi sáng|buổi trưa|buổi chiều|buổi tối|sáng mai|chiều mai|tối mai|sáng ngày kia|chiều ngày kia|tối ngày kia|thứ hai|thứ ba|thứ tu|thứ năm|thứ sáu|thứ bảy|chủ nhật|tháng một|tháng hai|tháng ba|tháng tu|tháng năm|tháng sáu|tháng bảy|tháng tám|tháng chín|tháng mười|tháng mười một|tháng mười hai|tuần này|tuần sau|tuần tới|ngày \d{1,2} tháng \d{1,2}|ngày \d{1,2} tháng này|ngày \d{1,2} tháng sau)\b
+        \b(?:mai|ngày mai|ngày kia|hôm nay|chiều nay|tối nay|buổi sáng|buổi trưa|buổi chiều|buổi tối|sáng mai|chiều mai|tối mai|sáng ngày kia|
+        chiều ngày kia|tối ngày kia|thứ hai|thứ ba|thứ tu|thứ năm|thứ sáu|thứ bảy|chủ nhật|tháng một|tháng hai|tháng ba|tháng tu|tháng năm|
+        tháng sáu|tháng bảy|tháng tám|tháng chín|tháng mười|tháng mười một|tháng mười hai|tuần này|tuần sau|tuần tới|
+        ngày \d{1,2} tháng \d{1,2}|ngày \d{1,2} tháng này|ngày \d{1,2} tháng sau)\b
     """.trimIndent()
 
         val pattern = Pattern.compile(temporalPattern, Pattern.CASE_INSENSITIVE)
@@ -94,10 +96,7 @@ object DateScheduler {
         if (temporalWords.isEmpty()) {
             return null
         }
-
         val currentDate = LocalDate.now()
-        val currentDayOfWeek = currentDate.dayOfWeek
-
         val convertedDates = mutableListOf<LocalDate?>()
         temporalWords.forEachIndexed { index, temporalWord ->
             val referenceDate = currentDate
@@ -159,14 +158,13 @@ object DateScheduler {
                         "$convertedDate"
                     }
                 }
-                // chứa "tuần sau" hoặc "tuần tới", tính toán ngày của tuần sau
                 temporalWords.any { it in listTuan } -> {
                     if (pastDaysOfWeek.contains(temporalWord)) {
                         "${convertedDate}"
                     } else {
                         "${convertedDate.plusDays(7)}"
                     }
-                }// trả về ngày chuyển đổi
+                }
                 else -> {
                     "$convertedDate"
                 }
@@ -178,46 +176,32 @@ object DateScheduler {
 
 
     fun findTimeReferences(sentence: String): String? {
-        // Nhận diện mẫu giờ cụ thể với từ chỉ buổi
-        //\\s*: Không hoặc nhiều khoảng trắng.
         val specificTimeWithPeriodPattern = Pattern.compile("\\b\\d{1,2}:\\d{2}\\s*(sáng|chiều|tối|đêm)?\\b", Pattern.CASE_INSENSITIVE)
         val specificTimeWithPeriodMatcher = specificTimeWithPeriodPattern.matcher(sentence)
-        // Tách chuỗi thời gian và từ chỉ buổi (nếu có).
-        //Chuyển đổi giờ dựa trên từ chỉ buổi:
-        //Buổi sáng giữ nguyên.
-        //Buổi chiều, tối, đêm cộng thêm 12 giờ nếu giờ nhỏ hơn 12.
-        //Trả về giờ ở định dạng 24 giờ.
         while (specificTimeWithPeriodMatcher.find()) {
             val timeString = specificTimeWithPeriodMatcher.group()
             val parts = timeString.split(" ")
             val timePart = parts[0] // phần chỉ h
-            val period = if (parts.size > 1) parts[1].toLowerCase() else "" //là phần thứ hai, nếu có, chứa từ chỉ buổi, ví dụ "chiều".
-
+            val period = if (parts.size > 1) parts[1].toLowerCase() else ""
             val (hour, minute) = timePart.split(":").map { it.toInt() }
-
             return when (period) {
                 "sáng" -> String.format("%02d:%02d", hour, minute)
                 "chiều", "tối", "đêm" -> String.format("%02d:%02d", if (hour < 12) hour + 12 else hour, minute)
                 else -> timePart
             }
         }
-
         // Nhận diện mẫu giờ cụ thể không có từ chỉ buổi
         val specificTimePattern = Pattern.compile("\\b\\d{1,2}:\\d{2}\\b", Pattern.CASE_INSENSITIVE)
         val specificTimeMatcher = specificTimePattern.matcher(sentence)
-
         while (specificTimeMatcher.find()) {
             return specificTimeMatcher.group()
         }
-
-        // Nhận diện các trường hợp đặc biệt như "3 giờ sáng", "3 giờ chiều", v.v.
+        // Nhận diện các trường hợp đặc biệt như "3 giờ sáng", "3 giờ chiều"
         val specialCasesPattern = Pattern.compile("\\b(\\d{1,2})\\s*giờ\\s*(sáng|chiều|tối|đêm)\\b", Pattern.CASE_INSENSITIVE)
         val specialCasesMatcher = specialCasesPattern.matcher(sentence)
-
         while (specialCasesMatcher.find()) {
             val hour = specialCasesMatcher.group(1)?.toIntOrNull()
             val period = specialCasesMatcher.group(2)?.toLowerCase()
-
             if (hour != null && period != null) {
                 return when (period) {
                     "sáng" -> String.format("%02d:00", hour)
@@ -226,13 +210,10 @@ object DateScheduler {
                 }
             }
         }
-
         val simpleHourPattern = Pattern.compile("\\b(\\d{1,2})\\s*giờ\\b", Pattern.CASE_INSENSITIVE)
         val simpleHourMatcher = simpleHourPattern.matcher(sentence)
-
         while (simpleHourMatcher.find()) {
             val hour = simpleHourMatcher.group(1)?.toIntOrNull()
-
             if (hour != null) {
                 return String.format("%02d:00", hour)
             }

@@ -82,14 +82,14 @@
             app:strokeColor="#0D0140"
             app:strokeWidth="2dp" />
 
-        <TextView
-            android:id="@+id/tvEmailResend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="You have not received the email? Resend"
-            android:textColor="@color/black"
-            android:textSize="14sp" />
+<!--        <TextView-->
+<!--            android:id="@+id/tvEmailResend"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:text="You have not received the email? Resend"-->
+<!--            android:textColor="@color/black"-->
+<!--            android:textSize="14sp" />-->
 
     </LinearLayout>
 

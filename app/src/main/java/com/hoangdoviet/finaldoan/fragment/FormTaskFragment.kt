@@ -88,6 +88,7 @@ class FormTaskFragment : SuperBottomSheetFragment() {
         picker
     }
 
+
     fun formatDate(date: Date, check: Boolean): String {
         val dayFormat = SimpleDateFormat("dd", Locale.getDefault())
         val monthFormat = SimpleDateFormat("MM", Locale.getDefault())

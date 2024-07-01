@@ -30,7 +30,6 @@ import com.hoangdoviet.finaldoan.model.Holiday
 import com.hoangdoviet.finaldoan.model.LunarCalendar
 import com.hoangdoviet.finaldoan.model.ThoiGianConVat
 import com.hoangdoviet.finaldoan.model.TopRightDotSpan
-import com.hoangdoviet.finaldoan.model.holidays
 import com.hoangdoviet.finaldoan.utils.HolidayData
 import com.hoangdoviet.finaldoan.utils.showToast
 import com.prolificinteractive.materialcalendarview.CalendarDay
@@ -295,7 +294,8 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
 
 
     private fun updateHolidays(month: Int) {
-        val holidaysForMonth = holidays[month] ?: emptyList()
+        //  val initialHolidays = HolidayData.holidays[m + 1] ?: emptyList()
+        val holidaysForMonth = HolidayData.holidays[month] ?: emptyList()
         holidaysAdapter.updateHolidays(holidaysForMonth)
     }
 

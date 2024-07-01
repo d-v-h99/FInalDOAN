@@ -33,6 +33,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
     <ImageView
         android:id="@+id/iv_calendar_next"
         android:layout_width="wrap_content"
@@ -42,6 +43,7 @@
         app:tint="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <TextView
         android:id="@+id/text_date_month"
@@ -96,12 +98,11 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="-450dp"
+
         android:backgroundTint="#F8BB71"
 
         app:cardCornerRadius="16dp"
         android:id="@+id/cardview"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/recyclerView">
@@ -109,13 +110,24 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingVertical="16dp">
+            android:paddingTop="5dp"
+            >
+                        <ImageView
+                            android:id="@+id/icon_task2"
+                            android:layout_width="150dp"
+                            android:layout_height="110dp"
+                            android:src="@drawable/star15"
+                            app:tint="@color/white"
+                            android:layout_marginStart="260dp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            />
 
             <ProgressBar
                 android:id="@+id/scoreProgressBar"
                 android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:layout_marginStart="200dp"
+                android:layout_height="105dp"
+                android:layout_marginStart="260dp"
                 android:indeterminateOnly="false"
                 android:progressDrawable="@drawable/background_process_bar"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -140,29 +152,47 @@
                 android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="65dp"
+                android:layout_marginStart="85dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="100dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="46dp"
                 android:text="Hôm nay bạn có"
+                android:textColor="#715A41"
                 android:textSize="25sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/tvScore"
+                app:layout_constraintHorizontal_bias="0.509"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0" />
 
             <TextView
                 android:id="@+id/textView2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="84dp"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="4dp"
                 android:layout_marginEnd="64dp"
                 android:text="0 nhiệm vụ"
-                android:textSize="20sp"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
                 app:layout_constraintEnd_toStartOf="@+id/scoreProgressBar"
+                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+            <ImageView
+                android:id="@+id/icon_task"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/group3"
+                app:tint="@color/white"
+                android:layout_marginStart="-5dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+               />
+
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

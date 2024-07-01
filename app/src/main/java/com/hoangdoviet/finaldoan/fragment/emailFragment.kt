@@ -34,7 +34,7 @@ class emailFragment : Fragment() {
     private fun setupUI() {
         binding.apply {
 
-            tvEmailResend.text = createResendText()
+           // tvEmailResend.text = createResendText()
 
             btnBackToLogin.setOnClickListener {
                 findNavController().popBackStack(R.id.loginFragment2, false)
