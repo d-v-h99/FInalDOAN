@@ -137,6 +137,9 @@ class FormTaskFragment : SuperBottomSheetFragment() {
             }
 
         }
+        binding.button2.setOnClickListener {
+            dismiss()
+        }
 
 
     }
@@ -150,8 +153,10 @@ class FormTaskFragment : SuperBottomSheetFragment() {
             .addOnSuccessListener {
                 Log.d("TaskActivity", "Task added to Tasks collection successfully")
 
-                // Kiểm tra xem tài liệu TasksByDate có tồn tại không
-                val tasksByDateRef = db.collection("TasksByDate").document(date)
+                // Tạo ID cho TasksByDate document kết hợp từ date và userId
+                val tasksByDateId = "$date-$userId"
+                val tasksByDateRef = db.collection("TasksByDate").document(tasksByDateId)
+
                 tasksByDateRef.get().addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val document = task.result
@@ -159,26 +164,16 @@ class FormTaskFragment : SuperBottomSheetFragment() {
                             // Nếu tài liệu tồn tại, cập nhật taskIds
                             tasksByDateRef.update("taskIds", FieldValue.arrayUnion(taskId))
                                 .addOnSuccessListener {
-                                    Log.d(
-                                        "TaskActivity",
-                                        "Task added to TasksByDate collection successfully"
-                                    )
+                                    Log.d("TaskActivity", "Task added to TasksByDate collection successfully")
                                     // Cập nhật taskIds trong User
                                     db.collection("User").document(userId)
                                         .update("taskIds", FieldValue.arrayUnion(taskId))
                                         .addOnSuccessListener {
-                                            Log.d(
-                                                "TaskActivity",
-                                                "Task added to User's taskIds successfully"
-                                            )
+                                            Log.d("TaskActivity", "Task added to User's taskIds successfully")
                                             dismiss()
                                         }
                                         .addOnFailureListener { e ->
-                                            Log.e(
-                                                "TaskActivity",
-                                                "Failed to update user's taskIds",
-                                                e
-                                            )
+                                            Log.e("TaskActivity", "Failed to update user's taskIds", e)
                                         }
                                 }
                                 .addOnFailureListener { e ->
@@ -191,26 +186,16 @@ class FormTaskFragment : SuperBottomSheetFragment() {
                             )
                             tasksByDateRef.set(newTaskDate)
                                 .addOnSuccessListener {
-                                    Log.d(
-                                        "TaskActivity",
-                                        "TaskByDate document created successfully"
-                                    )
+                                    Log.d("TaskActivity", "TaskByDate document created successfully")
                                     // Cập nhật taskIds trong User
                                     db.collection("User").document(userId)
                                         .update("taskIds", FieldValue.arrayUnion(taskId))
                                         .addOnSuccessListener {
-                                            Log.d(
-                                                "TaskActivity",
-                                                "Task added to User's taskIds successfully"
-                                            )
+                                            Log.d("TaskActivity", "Task added to User's taskIds successfully")
                                             dismiss()
                                         }
                                         .addOnFailureListener { e ->
-                                            Log.e(
-                                                "TaskActivity",
-                                                "Failed to update user's taskIds",
-                                                e
-                                            )
+                                            Log.e("TaskActivity", "Failed to update user's taskIds", e)
                                         }
                                 }
                                 .addOnFailureListener { e ->
@@ -226,4 +211,5 @@ class FormTaskFragment : SuperBottomSheetFragment() {
                 Log.e("TaskActivity", "Failed to add task", e)
             }
     }
+
 }

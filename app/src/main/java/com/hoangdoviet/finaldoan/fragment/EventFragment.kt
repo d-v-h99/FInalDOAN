@@ -217,7 +217,7 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                 try {
                     val currentUserUid = mAuth.currentUser?.uid
                     if (currentUserUid == null) {
-                        showToast(requireContext(), "User is not logged in.")
+                        showToast(requireContext(), "Vui lòng đăng nhập để xử dụng tính năng trên")
                         return@setOnClickListener
                     }
                     val title = binding.valueTitle.text.toString()
@@ -353,6 +353,8 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                     //dismiss()
                 }
 
+            } else {
+                dismiss()
             }
 
         }
@@ -495,10 +497,10 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
         }
 
         batch.commit().addOnSuccessListener {
-            showToast(requireContext(), "Repeating events added and user updated successfully")
+            //showToast(requireContext(), "Repeating events added and user updated successfully")
             dismiss() // Chỉ đóng giao diện khi lưu thành công
         }.addOnFailureListener { e ->
-            showToast(requireContext(), "Error adding repeating events: $e")
+            showToast(requireContext(), "Có lỗi với các sự kiện lặp: $e")
         }
     }
 
@@ -513,23 +515,23 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                 db.collection("User").document(userId)
                     .update("eventID", FieldValue.arrayUnion(event.eventID))
                     .addOnSuccessListener {
-                        showToast(requireContext(), "Event added and user updated successfully")
+                       // showToast(requireContext(), "Event added and user updated successfully")
                         setAlarm(event) // Thiết lập thông báo cho sự kiện mớ
                         dismiss() // Chỉ đóng giao diện khi lưu thành công
                     }
                     .addOnFailureListener { e ->
-                        showToast(requireContext(), "Error updating user: $e")
+                        showToast(requireContext(), "Cõ lỗi khi thêm sự kiện: $e")
                     }
             }
             .addOnFailureListener { e ->
-                showToast(requireContext(), "Error adding event: $e")
+                showToast(requireContext(), "Lỗi thêm sự kiện: $e")
             }
     }
 
     private fun deleteEvent(eventId: String) {
         val currentUserUid = mAuth.currentUser?.uid
         if (currentUserUid == null) {
-            showToast(requireContext(), "User is not logged in.")
+            showToast(requireContext(), "Vui lòng đăng nhập để sử dụng ")
             return
         }
         mFirestore.collection("Events").document(eventId).delete()
@@ -537,7 +539,7 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                 mFirestore.collection("User").document(currentUserUid)
                     .update("eventID", FieldValue.arrayRemove(eventId))
                     .addOnSuccessListener {
-                        showToast(requireContext(), "Event deleted and user updated successfully")
+                        showToast(requireContext(), "Xoá sự kiện thành công")
                         // Gửi kết quả lại cho MonthFragment mặc định c
                         setFragmentResult("requestKey", Bundle().apply {
                             putInt("position", position)
@@ -546,18 +548,18 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                         dismiss()
                     }
                     .addOnFailureListener { e ->
-                        showToast(requireContext(), "Error updating user: $e")
+                        showToast(requireContext(), "Có lỗi khi xoá sự kiện: $e")
                     }
             }
             .addOnFailureListener { e ->
-                showToast(requireContext(), "Error deleting event: $e")
+                showToast(requireContext(), "Có lỗi khi xoá sự kiện: $e")
             }
     }
 
     private fun updateEvent(event: Event) {
         val currentUserUid = mAuth.currentUser?.uid
         if (currentUserUid == null) {
-            showToast(requireContext(), "User is not logged in.")
+            showToast(requireContext(), "Vui lòng đăng nhập để sử dụng")
             return
         }
 
@@ -569,7 +571,7 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                 mFirestore.collection("User").document(currentUserUid)
                     .update("eventID", FieldValue.arrayUnion(eventId))
                     .addOnSuccessListener {
-                        showToast(requireContext(), "Event updated and user updated successfully")
+                        showToast(requireContext(), "Cập nhật sự kiện thành công")
                         setAlarm(event) // Thiết lập thông báo cho sự kiện mớ
                         // Gửi kết quả lại cho MonthFragment
                         setFragmentResult("requestKey1", Bundle().apply {
@@ -581,11 +583,11 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                         dismiss()
                     }
                     .addOnFailureListener { e ->
-                        showToast(requireContext(), "Error updating user: $e")
+                        showToast(requireContext(), "Có lỗi khi cập nhật ứng dụng: $e")
                     }
             }
             .addOnFailureListener { e ->
-                showToast(requireContext(), "Error updating event: $e")
+                showToast(requireContext(), "Có lỗi khi cập nhật ứng dụng: $e")
             }
     }
 
@@ -738,7 +740,7 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
             val event = com.google.api.services.calendar.model.Event()
                 .setSummary(event.title)
                 .setLocation("Hà Nội, Việt Nam")
-                .setDescription("Đặt lịch bởi ứng dụng HoangLich")
+                .setDescription("Đặt lịch bởi ứng dụng LichThongMinh")
             val start = EventDateTime()
                 .setDateTime(startDateTime)
                 .setTimeZone("Asia/Ho_Chi_Minh")

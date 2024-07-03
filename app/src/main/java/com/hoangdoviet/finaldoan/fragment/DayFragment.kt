@@ -29,8 +29,9 @@ import kotlin.concurrent.scheduleAtFixedRate
 
 class DayFragment : Fragment() {
 
-    private var _binding: FragmentDayBinding? = null
-    private val binding get() = _binding!!
+//    private var _binding: FragmentDayBinding? = null
+//    private val binding get() = _binding!!
+    private lateinit var binding: FragmentDayBinding
 
     private var currentDate = Calendar.getInstance()
     private lateinit var threadTime: CountTime
@@ -51,7 +52,7 @@ class DayFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentDayBinding.inflate(inflater, container, false)
+        binding = FragmentDayBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -184,10 +185,6 @@ class DayFragment : Fragment() {
         threadTime.cancel()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
 
     inner class CountTime : Runnable {
 

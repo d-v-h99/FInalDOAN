@@ -73,7 +73,7 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         setupTaskAdapter()
         binding.recyclerView1.layoutManager = LinearLayoutManager(context)
         binding.recyclerView1.adapter = taskAdapter
-        updateOverdueTasks()
+        //updateOverdueTasks()
         loadTasksByDate(todayDate)
         loadTaskDatesForNextSevenDays()
     }
@@ -129,8 +129,10 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
     }
 
     private fun loadTasksByDate(date: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val tasksByDateId = "$date-$userId"
         val db = FirebaseFirestore.getInstance()
-        val tasksByDateRef = db.collection("TasksByDate").document(date)
+        val tasksByDateRef = db.collection("TasksByDate").document(tasksByDateId)
         tasks.clear()
         tasksByDateRef.get()
             .addOnSuccessListener { document ->
@@ -164,22 +166,35 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
             }
     }
 
+
     private fun addTask(userId: String, date: String, title: String) {
         val db = FirebaseFirestore.getInstance()
         val taskId = db.collection("Tasks").document().id
         val task = Task(id = taskId, title = title, status = "Chưa làm")
 
+        // Thêm task vào collection Tasks
         db.collection("Tasks").document(taskId).set(task)
             .addOnSuccessListener {
-                val tasksByDateRef = db.collection("TasksByDate").document(date)
+                Log.d("TaskActivity", "Task added to Tasks collection successfully")
+
+                // Tạo ID cho TasksByDate document kết hợp từ date và userId
+                val tasksByDateId = "$date-$userId"
+                val tasksByDateRef = db.collection("TasksByDate").document(tasksByDateId)
+
                 tasksByDateRef.get().addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val document = task.result
                         if (document != null && document.exists()) {
+                            // Nếu tài liệu tồn tại, cập nhật taskIds
                             tasksByDateRef.update("taskIds", FieldValue.arrayUnion(taskId))
                                 .addOnSuccessListener {
+                                    Log.d("TaskActivity", "Task added to TasksByDate collection successfully")
+                                    // Cập nhật taskIds trong User
                                     db.collection("User").document(userId)
                                         .update("taskIds", FieldValue.arrayUnion(taskId))
+                                        .addOnSuccessListener {
+                                            Log.d("TaskActivity", "Task added to User's taskIds successfully")
+                                        }
                                         .addOnFailureListener { e ->
                                             Log.e("TaskActivity", "Failed to update user's taskIds", e)
                                         }
@@ -188,13 +203,19 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
                                     Log.e("TaskActivity", "Failed to update TasksByDate", e)
                                 }
                         } else {
+                            // Nếu tài liệu không tồn tại, tạo mới và cập nhật taskIds
                             val newTaskDate = hashMapOf(
                                 "taskIds" to arrayListOf(taskId)
                             )
                             tasksByDateRef.set(newTaskDate)
                                 .addOnSuccessListener {
+                                    Log.d("TaskActivity", "TaskByDate document created successfully")
+                                    // Cập nhật taskIds trong User
                                     db.collection("User").document(userId)
                                         .update("taskIds", FieldValue.arrayUnion(taskId))
+                                        .addOnSuccessListener {
+                                            Log.d("TaskActivity", "Task added to User's taskIds successfully")
+                                        }
                                         .addOnFailureListener { e ->
                                             Log.e("TaskActivity", "Failed to update user's taskIds", e)
                                         }
@@ -221,32 +242,41 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         tasksByDateRef.get()
             .addOnSuccessListener { querySnapshot ->
                 for (document in querySnapshot) {
-                    val date = document.id.toInt()
-                    if (date < currentDate) {
-                        val taskIds = document.get("taskIds") as? List<String> ?: emptyList()
-                        if (taskIds.isEmpty()) continue
+                    val documentId = document.id
+                    val datePart = documentId.split("-").firstOrNull()
 
-                        val tasksCollection = db.collection("Tasks")
-                        val batch = tasksCollection.whereIn(FieldPath.documentId(), taskIds)
-                        batch.get()
-                            .addOnSuccessListener { tasksSnapshot ->
-                                for (taskDocument in tasksSnapshot) {
-                                    val task = taskDocument.toObject(Task::class.java)
-                                    if (task.status != "Hoàn thành") {
-                                        task.status = "Quá hạn"
-                                        tasksCollection.document(task.id).set(task)
-                                            .addOnSuccessListener {
-                                                Log.d("TaskUpdate", "Updated task ${task.id} to Quá hạn")
+                    if (datePart != null) {
+                        try {
+                            val date = datePart.toInt()
+                            if (date < currentDate) {
+                                val taskIds = document.get("taskIds") as? List<String> ?: emptyList()
+                                if (taskIds.isEmpty()) continue
+
+                                val tasksCollection = db.collection("Tasks")
+                                val batch = tasksCollection.whereIn(FieldPath.documentId(), taskIds)
+                                batch.get()
+                                    .addOnSuccessListener { tasksSnapshot ->
+                                        for (taskDocument in tasksSnapshot) {
+                                            val task = taskDocument.toObject(Task::class.java)
+                                            if (task.status != "Hoàn thành") {
+                                                task.status = "Quá hạn"
+                                                tasksCollection.document(task.id).set(task)
+                                                    .addOnSuccessListener {
+                                                        Log.d("TaskUpdate", "Updated task ${task.id} to Quá hạn")
+                                                    }
+                                                    .addOnFailureListener { e ->
+                                                        Log.e("TaskUpdate", "Failed to update task ${task.id}", e)
+                                                    }
                                             }
-                                            .addOnFailureListener { e ->
-                                                Log.e("TaskUpdate", "Failed to update task ${task.id}", e)
-                                            }
+                                        }
                                     }
-                                }
+                                    .addOnFailureListener { e ->
+                                        Log.e("TaskUpdate", "Failed to load tasks", e)
+                                    }
                             }
-                            .addOnFailureListener { e ->
-                                Log.e("TaskUpdate", "Failed to load tasks", e)
-                            }
+                        } catch (e: NumberFormatException) {
+                            Log.e("TaskUpdate", "Invalid date format in document ID: $documentId", e)
+                        }
                     }
                 }
             }
@@ -254,6 +284,7 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
                 Log.e("TaskUpdate", "Failed to load tasks by date", e)
             }
     }
+
 
 
     private fun deleteTask(userId: String, date: String, taskId: String) {
@@ -299,8 +330,10 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
     }
 
     private fun countCompletedTasksByDate(date: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val tasksByDateId = "$date-$userId"
         val db = FirebaseFirestore.getInstance()
-        val tasksByDateRef = db.collection("TasksByDate").document(date)
+        val tasksByDateRef = db.collection("TasksByDate").document(tasksByDateId)
 
         tasksByDateRef.get()
             .addOnSuccessListener { document ->
@@ -351,7 +384,7 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         val taskDates = mutableListOf<String>()
 
         for (date in currentDate..endDate) {
-            val tasksByDateRef = db.collection("TasksByDate").document(date.toString())
+            val tasksByDateRef = db.collection("TasksByDate").document("$date-$userId")
             tasksByDateRef.get()
                 .addOnSuccessListener { document ->
                     if (document != null && document.exists()) {

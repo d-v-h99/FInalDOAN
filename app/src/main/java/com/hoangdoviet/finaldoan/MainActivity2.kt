@@ -150,13 +150,13 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         viewModel.isGoogleLoggedIn.observe(this, Observer { isLoggedIn ->
             checklogin = isLoggedIn
             if (isLoggedIn) {
-                showToast(this, "Đã đăng nhập")
+               // showToast(this, "Đã đăng nhập")
                 Log.d("checkdangnhap", "Đăng nhập rồi")
                 if (mCredential?.selectedAccountName == null){
                     chooseAccount()
                 }
             } else {
-                showToast(this, "Đã thoát")
+              //  showToast(this, "Đã thoát")
                 Log.d("checkdangnhap", "Chưa đăng nhập")
             }
         })
@@ -530,7 +530,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
 
 
-                    message.toLowerCase().contains("giá vàngxx") -> {
+                    message.toLowerCase().contains("giá vàng") -> {
                         responseText =
                             getGiaVangFromURLAsync("https://ngoctham.com/bang-gia-vang/").await()
                     }
@@ -546,89 +546,108 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 //                    }
                     message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("âm lịch")||
                             message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("ngày rằm")||
-                            message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("zzrằm")-> {
+                            message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("rằm")-> {
                         val Date = DateScheduler.extractLunarDate(message)
                         val time = DateScheduler.findTimeReferences(message)
                         val content = DateScheduler.getStringAfterKeyword(message)
-                        try {
-                            responseText = time +"\n"+content+"\n"+Date
-                            if(time.isNullOrEmpty()) responseText = "Bạn cần thêm thêm các từ chỉ thời gian để đặt lịch như 5 giờ sáng , 5 giờ chiều , hoặc mốc thời gian cụ thể như 10:45\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 GIỜ SÁNG với nội dung đi học toán"
-                            else if (content.isNullOrEmpty())   responseText = "Bạn cần thêm thêm từ nội dung để đặt lịch\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 giờ sáng với NỘI DUNG đi học toán"
-                            else if (Date.isNullOrEmpty()) responseText = "Không thể xác định các từ thời gian. Thử lại"
-                            else if (Date.contains("Không")) responseText = "Không xác định được ngày âm lịch"
-                            else{
-                                val currentUserUid = mAuth.currentUser?.uid!!
-                                val event = Event(
-                                    eventID = generateEventId(),
-                                    date = convertDateString(Date),
-                                    title = content,
-                                    timeStart = time,
-                                    timeEnd =addOneHourToTime(time) ,
-                                    repeat = 0
-                                )
-                                responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
-                                if(checklogin) {
-                                    createCalendarEvent(event)
-                                }
-                                addSingleEvent(currentUserUid, event)
-
-                            }
-                        }catch (e: Exception){
+                        val currentUserUid = mAuth.currentUser?.uid
+                        if (currentUserUid.isNullOrEmpty()){
                             responseText = "Đăng nhập để sử dụng tính năng trên"
+                        }else {
+                            try {
+                                responseText = time +"\n"+content+"\n"+Date
+                                if(time.isNullOrEmpty()) responseText = "Bạn cần thêm thêm các từ chỉ thời gian để đặt lịch như 5 giờ sáng , 5 giờ chiều , hoặc mốc thời gian cụ thể như 10:45\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 GIỜ SÁNG với nội dung đi học toán"
+                                else if (content.isNullOrEmpty())   responseText = "Bạn cần thêm thêm từ nội dung để đặt lịch\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 giờ sáng với NỘI DUNG đi học toán"
+                                else if (Date.isNullOrEmpty()) responseText = "Không thể xác định các từ thời gian. Thử lại"
+                                else if (Date.contains("Không")) responseText = "Không xác định được ngày âm lịch"
+                                else{
+                                    val event = Event(
+                                        eventID = generateEventId(),
+                                        date = convertDateString(Date),
+                                        title = content,
+                                        timeStart = time,
+                                        timeEnd =addOneHourToTime(time) ,
+                                        repeat = 0
+                                    )
+                                    responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
+                                    if(checklogin) {
+                                        createCalendarEvent(event)
+                                    }
+                                    addSingleEvent(currentUserUid, event)
+
+                                }
+                            }catch (e: Exception){
+                                responseText = "Có lỗi khi thêm sự kiện $e"
+                            }
                         }
+
                     }
                     message.toLowerCase().contains("đặt lịch") -> {
                         val time = DateScheduler.findTimeReferences(message)
                         val content = DateScheduler.getStringAfterKeyword(message)
                         val listWordDate = DateScheduler.extractTemporalWords(message)
+                        Log.d("checkTIme", listWordDate.toString())
                         val Date = DateScheduler.checktime(listWordDate)
-                        try {
-                            responseText = time +"\n"+content+"\n"+Date
-                            if(time.isNullOrEmpty()) responseText = "Bạn cần thêm thêm các từ chỉ thời gian để đặt lịch như 5 giờ sáng , 5 giờ chiều , hoặc mốc thời gian cụ thể như 10:45\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 GIỜ SÁNG với nội dung đi học toán"
-                            else if (content.isNullOrEmpty())   responseText = "Bạn cần thêm thêm từ nội dung để đặt lịch\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 giờ sáng với NỘI DUNG đi học toán"
-                            else if(listWordDate.isEmpty())  responseText = "Bạn cần thêm thêm các từ chỉ ngày để xác định ngày đặt lịch ví dụ hôm nay , ngày mai, thứ hai tuần sau \n Ví dụ đặt lịch cho tôi NGÀY MAI lúc 10 giờ sáng với nội dung đi học toán"
-                            else if (Date.isNullOrEmpty()) responseText = "Không thể xác định các từ thời gian. Thử lại"
-                            else if (Date.contains("Lỗi vì ngày")) responseText = "Thời gian đặt lịch đã quá hạn, Vui lòng nói thời gian hợp lệ"
-                            else{
-                                val currentUserUid = mAuth.currentUser?.uid!!
-                                val event = Event(
-                                    eventID = generateEventId(),
-                                    date = convertDateString(Date),
-                                    title = content,
-                                    timeStart = time,
-                                    timeEnd =addOneHourToTime(time) ,
-                                    repeat = 0
-                                )
-                                responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
-                                Log.d("checklogin", checklogin.toString())
-                                if(checklogin) {
-                                    createCalendarEvent(event)
-                                }
-                                    addSingleEvent(currentUserUid, event)
-                            }
-
-                        }catch (e: Exception){
+                        val currentUserUid = mAuth.currentUser?.uid
+                        if (currentUserUid.isNullOrEmpty()){
                             responseText = "Đăng nhập để sử dụng tính năng trên"
                         }
+                        else {
+                            try {
+                                responseText = time +"\n"+content+"\n"+Date
+                                if(time.isNullOrEmpty()) responseText = "Bạn cần thêm thêm các từ chỉ thời gian để đặt lịch như 5 giờ sáng , 5 giờ chiều , hoặc mốc thời gian cụ thể như 10:45\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 GIỜ SÁNG với nội dung đi học toán"
+                                else if (content.isNullOrEmpty())   responseText = "Bạn cần thêm thêm từ nội dung để đặt lịch\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 giờ sáng với NỘI DUNG đi học toán"
+                                else if(listWordDate.isEmpty())  responseText = "Bạn cần thêm thêm các từ chỉ ngày để xác định ngày đặt lịch ví dụ hôm nay , ngày mai, thứ hai tuần sau \n Ví dụ đặt lịch cho tôi NGÀY MAI lúc 10 giờ sáng với nội dung đi học toán"
+                                else if (Date.isNullOrEmpty()) responseText = "Không thể xác định các từ thời gian. Thử lại"
+                                else if (Date.contains("Lỗi vì ngày")) responseText = "Thời gian đặt lịch đã quá hạn, Vui lòng nói thời gian hợp lệ"
+                                else{
+                                    val currentUserUid = mAuth.currentUser?.uid!!
+                                    val event = Event(
+                                        eventID = generateEventId(),
+                                        date = convertDateString(Date),
+                                        title = content,
+                                        timeStart = time,
+                                        timeEnd =addOneHourToTime(time) ,
+                                        repeat = 0
+                                    )
+                                    responseText = "Thêm sự kiện thành công\n $content vào ngày ${event.date}"
+                                    Log.d("checklogin", checklogin.toString())
+                                    if(checklogin) {
+                                        createCalendarEvent(event)
+                                    }
+                                    addSingleEvent(currentUserUid, event)
+                                }
+
+                            }catch (e: Exception){
+                                responseText = "Có lỗi khi thêm sự kiện +$e"
+                            }
+                        }
+
                     }
                     message.toLowerCase().contains("hôm nay") && message.toLowerCase().contains("sự kiện") -> {
-                        val currentUserUid = mAuth.currentUser?.uid!!
-                        Log.d("checkhomnay", currentUserUid.toString())
-                        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                        val todayDate = dateFormat.format(Date())
-                        Log.d("checkhomnay", todayDate)
-                        val events = withContext(Dispatchers.IO) {
-                            getEventsByUserAndDate(currentUserUid, todayDate)
+                        val currentUserUid = mAuth.currentUser?.uid
+                        if(currentUserUid == null){
+                            responseText = "Đăng nhập để xem sự kiện"
                         }
-                        Log.d("checkhomnay", events.toString())
-
-                        responseText = if (events.isNotEmpty()) {
-                            events.joinToString(separator = "\n") { event ->
-                                "${event.title}: ${event.timeStart} - ${event.timeEnd}"
+                        else {
+                            Log.d("checkhomnay", currentUserUid.toString())
+                            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                            val todayDate = dateFormat.format(Date())
+                            Log.d("checkhomnay", todayDate)
+                            val events = withContext(Dispatchers.IO) {
+                                getEventsByUserAndDate(currentUserUid, todayDate)
                             }
-                        } else {
-                            "Hôm nay không có sự kiện"
+                            Log.d("checkhomnay", events.toString())
+
+                            responseText = if (events.isNotEmpty()) {
+                                events.joinToString(separator = "\n") { event ->
+                                    "${event.title}: ${event.timeStart} - ${event.timeEnd}"
+                                }
+                            } else {
+                                "Hôm nay không có sự kiện"
+                            }
                         }
+
                     }
                     message.toLowerCase().contains("kiểm tra") -> {
                         responseText = DateScheduler.extractLunarDate(message)
@@ -692,7 +711,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
             val googleEvent = com.google.api.services.calendar.model.Event()
                 .setSummary(event.title)
                 .setLocation("Hà Nội, Việt Nam")
-                .setDescription("Đặt lịch bởi ứng dụng HoangLich")
+                .setDescription("Đặt lịch bởi ứng dụng LichThongMinh")
             val start = EventDateTime()
                 .setDateTime(startDateTime)
                 .setTimeZone("Asia/Ho_Chi_Minh")
@@ -1085,15 +1104,15 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
                 db.collection("User").document(userId)
                     .update("eventID", FieldValue.arrayUnion(event.eventID))
                     .addOnSuccessListener {
-                        showToast(this, "Event added and user updated successfully")
+                        showToast(this, "Thêm sự kiện thành công")
 
                     }
                     .addOnFailureListener { e ->
-                        showToast(this, "Error updating user: $e")
+                        showToast(this, "Có lỗi khi thêm sự kiện: $e")
                     }
             }
             .addOnFailureListener { e ->
-                showToast(this, "Error adding event: $e")
+                showToast(this, "Có lỗi khi thêm sự kiện: $e")
             }
     }
 
@@ -1133,13 +1152,14 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
 
     fun getTimeInSeconds(text: String): Any {
         val arr = text.split(" ")
-        val unit = arr.find { it in setOf("giây", "phút", "giờ") }
+        val unit = arr.find { it in setOf("giây", "phút", "giờ","tiếng") }
         val value = arr.getOrNull(2)?.toIntOrNull() ?: 0
 
         return when (unit) {
             "giây" -> startTimer("đếm ngươc", value)
             "phút" -> startTimer("đếm ngươc", value * 60)
             "giờ" -> startTimer("đếm ngươc", value * 3600)
+            "tiếng" -> startTimer("đếm ngươc", value * 3600)
             else -> 0
         }
     }

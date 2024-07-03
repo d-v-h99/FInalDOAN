@@ -92,6 +92,7 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             val month = date.month + 1 // CalendarDay month is 0-based, so add 1
             val year = date.year
             val dateString = String.format("%02d/%02d/%04d", day, month, year)
+            Log.d("checkdatee",dateString)
             fetchEventsForDate(dateString)
         }
 //        arguments?.getString("EVENT_DATE")?.let { date ->
@@ -229,7 +230,7 @@ class MonthFragment : Fragment(), EventListAdapter.EventClickListener {
             if (userDocument.exists()) {
                 val eventIDs = userDocument.get("eventID") as? List<String> ?: emptyList()
                 if (eventIDs.isEmpty()) {
-                    Toast.makeText(context, "No events for this user.", Toast.LENGTH_SHORT).show()
+                   // Toast.makeText(context, "No events for this user.", Toast.LENGTH_SHORT).show()
                     return@addOnSuccessListener
                 }
 

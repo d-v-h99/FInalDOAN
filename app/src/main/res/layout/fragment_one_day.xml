@@ -8,7 +8,7 @@
     tools:context=".fragment.OneDayFragment">
 
     <RelativeLayout
-        android:layout_marginTop="65dp"
+        android:layout_marginTop="69dp"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"

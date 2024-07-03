@@ -1,5 +1,6 @@
 package com.hoangdoviet.finaldoan.utils
 
+import android.util.Log
 import com.hoangdoviet.finaldoan.model.LunarCalendar
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -24,6 +25,9 @@ object DateScheduler {
 
         val lunarDatePattern = Pattern.compile("\\b(rằm\\s+tháng\\s+giêng|rằm\\s+tháng\\s+chạp|rằm\\s+tháng\\s+\\d+|mùng\\s\\d+\\s+tháng\\s\\d+\\s+âm\\s+lịch|\\d+\\s+âm\\s+lịch\\s+tháng\\s+này|\\d+\\s+âm\\s+lịch\\s+tháng\\s+\\d+|mùng\\s+\\d+\\s+âm\\s+lịch\\s+tháng\\s+này|rằm\\s+tháng\\s+này|ngày\\s+rằm\\s+tháng\\s+này|\\d+\\s+tháng\\s+\\d+\\s+âm\\s+lịch)\\b", Pattern.CASE_INSENSITIVE)
         val matcher = lunarDatePattern.matcher(sentence)
+        Log.d("checkmonth", monthLunar.toString())
+        Log.d("checkmonth", d.toString()+"/"+ m.toString() +"/")
+        Log.d("checkmonth", jsonObject.toString())
 
         while (matcher.find()) {
             val matchedPhrase = matcher.group().toLowerCase()
@@ -72,12 +76,10 @@ object DateScheduler {
 
 
     fun extractTemporalWords(sentence: String): List<String> {
+        // Biểu thức chính quy để phát hiện các từ chỉ thời gian và ngày
         val sentence = sentence.replace("tư", "tu")
         val temporalPattern = """
-        \b(?:mai|ngày mai|ngày kia|hôm nay|chiều nay|tối nay|buổi sáng|buổi trưa|buổi chiều|buổi tối|sáng mai|chiều mai|tối mai|sáng ngày kia|
-        chiều ngày kia|tối ngày kia|thứ hai|thứ ba|thứ tu|thứ năm|thứ sáu|thứ bảy|chủ nhật|tháng một|tháng hai|tháng ba|tháng tu|tháng năm|
-        tháng sáu|tháng bảy|tháng tám|tháng chín|tháng mười|tháng mười một|tháng mười hai|tuần này|tuần sau|tuần tới|
-        ngày \d{1,2} tháng \d{1,2}|ngày \d{1,2} tháng này|ngày \d{1,2} tháng sau)\b
+        \b(?:mai|ngày mai|ngày kia|hôm nay|chiều nay|tối nay|buổi sáng|buổi trưa|buổi chiều|buổi tối|sáng mai|chiều mai|tối mai|sáng ngày kia|chiều ngày kia|tối ngày kia|thứ hai|thứ ba|thứ tu|thứ năm|thứ sáu|thứ bảy|chủ nhật|tháng một|tháng hai|tháng ba|tháng tu|tháng năm|tháng sáu|tháng bảy|tháng tám|tháng chín|tháng mười|tháng mười một|tháng mười hai|tuần này|tuần sau|tuần tới|ngày \d{1,2} tháng \d{1,2}|ngày \d{1,2} tháng này|ngày \d{1,2} tháng sau)\b
     """.trimIndent()
 
         val pattern = Pattern.compile(temporalPattern, Pattern.CASE_INSENSITIVE)
@@ -107,13 +109,13 @@ object DateScheduler {
                 "buổi sáng", "buổi chiều", "buổi tối" -> referenceDate
                 "sáng mai", "chiều mai", "tối mai" -> referenceDate.plusDays(1)
                 "sáng ngày kia", "chiều ngày kia", "tối ngày kia" -> referenceDate.plusDays(2)
-                "thứ hai" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
-                "thứ ba" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY))
-                "thứ tư" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.WEDNESDAY))
-                "thứ năm" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.THURSDAY))
-                "thứ sáu" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.FRIDAY))
-                "thứ bảy" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY))
-                "chủ nhật" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
+                "thứ hai" , "Thứ hai" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY))
+                "thứ ba" , "Thứ ba" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY))
+                "thứ tư", "Thứ tư" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.WEDNESDAY))
+                "thứ năm" , "Thứ năm" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.THURSDAY))
+                "thứ sáu" , "Thứ sáu" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.FRIDAY))
+                "thứ bảy","Thứ bảy" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY))
+                "chủ nhật", "Chủ nhật" -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
                 else -> {
                     when {
                         // Xử lý "ngày X tháng Y"
@@ -152,14 +154,14 @@ object DateScheduler {
             when {
                 temporalWords.contains("tuần này") -> {
                     // nếu chứa tuần này ktra ngay đã trôi qua chưa
-                    if (pastDaysOfWeek.contains(temporalWord)) {
+                    if (pastDaysOfWeek.any { it.equals(temporalWord, ignoreCase = true) }) {
                         "Lỗi vì ngày đã trôi qua"
                     } else {
                         "$convertedDate"
                     }
                 }
                 temporalWords.any { it in listTuan } -> {
-                    if (pastDaysOfWeek.contains(temporalWord)) {
+                    if (pastDaysOfWeek.any { it.equals(temporalWord, ignoreCase = true) }) {
                         "${convertedDate}"
                     } else {
                         "${convertedDate.plusDays(7)}"
