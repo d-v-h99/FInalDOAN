@@ -16,6 +16,7 @@ firebaseFirestore = "25.0.0"
 firebaseDatabaseKtx = "21.0.0"
 firebaseDatabase = "21.0.0"
 googleServicesVersion = "4.4.2"
+swiperefreshlayout = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +34,7 @@ firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore
 firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
 firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebaseDatabase" }
 gms-google-services = { group = "com.google.gms", name = "google-services", version.ref = "googleServicesVersion" }
+androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

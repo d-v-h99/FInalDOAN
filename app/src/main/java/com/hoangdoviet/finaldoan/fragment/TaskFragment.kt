@@ -1,6 +1,10 @@
 package com.hoangdoviet.finaldoan.fragment
 
+import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.Canvas
 import android.os.Bundle
 import android.os.Handler
@@ -21,6 +25,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.hoangdoviet.finaldoan.AlarmReceiverTask
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.adapter.TaskAdapter
 import com.hoangdoviet.finaldoan.databinding.FragmentTaskBinding
@@ -29,6 +34,7 @@ import com.hoangdoviet.finaldoan.horizontal_calendar_date.HorizontalCalendarSetU
 import com.hoangdoviet.finaldoan.model.Task
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -51,6 +57,7 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         _binding = FragmentTaskBinding.inflate(inflater, container, false)
         return binding.root
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -76,6 +83,7 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
         //updateOverdueTasks()
         loadTasksByDate(todayDate)
         loadTaskDatesForNextSevenDays()
+        setupDailyAlarms()
     }
 
     private fun setupTaskAdapter() {
@@ -400,6 +408,52 @@ class TaskFragment : Fragment(), HorizontalCalendarAdapter.OnItemClickListener {
                 }
         }
     }
+    private fun setupDailyAlarms() {
+        Log.d("TaskFragment", "Setting up daily alarms")
+        setDailyAlarm(7, 30, "MorningAlarm")
+        setDailyAlarm(23, 30, "NightAlarm")
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    private fun setDailyAlarm(hour: Int, minute: Int, alarmType: String) {
+        Log.d("TaskFragment", "Setting daily alarm: $alarmType at $hour:$minute")
+
+        val context = context ?: run {
+            Log.e("TaskFragment", "Context is null")
+            return
+        }
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val alarmIntent = Intent(context, AlarmReceiverTask::class.java).apply {
+            putExtra("ALARM_TYPE", alarmType)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            alarmType.hashCode(),
+            alarmIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = System.currentTimeMillis()
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            if (before(Calendar.getInstance())) {
+                add(Calendar.DAY_OF_MONTH, 1)
+            }
+        }
+
+        alarmManager.setExact(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis,
+            pendingIntent
+        )
+
+        Log.d("TaskFragment", "Alarm set for: $alarmType")
+    }
+
+
 
     private fun setUpItemTouchHelper(ddMmYy: String) {
         val simpleCallback: ItemTouchHelper.SimpleCallback =

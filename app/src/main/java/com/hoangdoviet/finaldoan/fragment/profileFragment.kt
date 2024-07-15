@@ -95,7 +95,7 @@ class profileFragment : Fragment() {
             if (mAuth.currentUser != null) {
                 mAuth.signOut()
                 showToast(requireContext(), "Thoát tài khoản thành công")
-                updateUI() // Cập nhật lại giao diện sau khi đăng xuất
+                updateUI()
             }
             binding.logout.visibility = View.GONE
             binding.login.visibility = View.VISIBLE
@@ -104,18 +104,6 @@ class profileFragment : Fragment() {
             binding.logoutGoogle.visibility = View.GONE
         }
 
-//        binding.btnLogin.setOnClickListener {
-//            val intent = Intent(activity, AuthActivity::class.java)
-//            startActivity(intent)
-//        }
-//
-//        binding.btnLogout.setOnClickListener {
-//            if (mAuth.currentUser != null) {
-//                mAuth.signOut()
-//                showToast(requireContext(), "Thoát tài khoản thành công")
-//                updateUI() // Cập nhật lại giao diện sau khi đăng xuất
-//            }
-//        }
         binding.mailDev.setOnClickListener {
             val recipient = "hoangdoviet27042002@gmail.com"
             val subject = "Góp ý ứng dụng LichThongMinh"
@@ -143,12 +131,7 @@ class profileFragment : Fragment() {
 
     private fun updateUIGoogle(isGoogleLoggedIn: Boolean) {
         if (isGoogleLoggedIn) {
-            // Người dùng đã đăng nhập Google
-            //binding.btnLogoutGoogle.visibility = View.VISIBLE
             binding.txtlienketGoogle.text = "Liên kết tài khoản : \n"+ (mCredential!!.selectedAccountName)
-        } else {
-            // Người dùng chưa đăng nhập Google
-           // binding.btnLogoutGoogle.visibility = View.GONE
         }
 
     }
@@ -157,32 +140,11 @@ class profileFragment : Fragment() {
         mProgress = ProgressDialog(requireContext())
         mProgress!!.setMessage("Loading...")
 
-//        binding.btnLoginGoogleAPI.setOnClickListener {
-//            getResultsFromApi()
-//            binding.logoutGoogle.visibility = View.VISIBLE
-//
-//        }
         binding.lienketGoogle.setOnClickListener {
             getResultsFromApi()
 
         }
 
-//        binding.btnAddEvent.setOnClickListener {
-//            //createCalendarEvent()
-//            val event = com.hoangdoviet.finaldoan.model.Event(
-//                eventID = "1111122",
-//                date = "18/06/2024",
-//                title = "checkkk 123",
-//                timeStart = "02:23",
-//                timeEnd = "02:43",
-//                repeat = 0
-//            )
-//          createCalendarEvent(event)
-//
-//        }
-//        binding.btnLogoutGoogle.setOnClickListener {
-//            unlinkGoogleAccount()
-//        }
         binding.logoutGoogle.setOnClickListener {
             unlinkGoogleAccount()
             binding.txtlienketGoogle.text = "Liên kết Google Calendar API"
@@ -202,11 +164,8 @@ class profileFragment : Fragment() {
                         val eventRef = db.collection("Events").document(eventId)
                         batch.delete(eventRef)
                     }
-
-                    // Clear eventIDs array in User document
                     val userRef = db.collection("User").document(userId)
                     batch.update(userRef, "eventID", emptyList<String>())
-
                     batch.commit().addOnCompleteListener {
                         if (it.isSuccessful) {
                             Toast.makeText(context, "Xoá tất cả sự kiện thành công", Toast.LENGTH_SHORT).show()
@@ -224,27 +183,19 @@ class profileFragment : Fragment() {
     private fun deleteAllTasks() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
-
         db.collection("User").document(userId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val taskIds = document.get("taskIds") as? List<String> ?: emptyList()
                     val batch = db.batch()
-
                     for (taskId in taskIds) {
                         val taskRef = db.collection("Tasks").document(taskId)
                         batch.delete(taskRef)
                     }
-
-                    // Clear taskIds array in User document
                     val userRef = db.collection("User").document(userId)
                     batch.update(userRef, "taskIds", emptyList<String>())
-
-                    // Track how many tasks are being removed from TasksByDate documents
                     var tasksToRemove = taskIds.size
                     var tasksRemoved = 0
-
-                    // Remove taskIds from TasksByDate documents
                     for (taskId in taskIds) {
                         db.collection("TasksByDate").whereArrayContains("taskIds", taskId).get()
                             .addOnSuccessListener { querySnapshot ->
@@ -276,7 +227,6 @@ class profileFragment : Fragment() {
                             }
                     }
 
-                    // If there are no tasks to remove from TasksByDate, commit the batch immediately
                     if (tasksToRemove == 0) {
                         batch.commit().addOnCompleteListener {
                             if (it.isSuccessful) {
@@ -299,12 +249,7 @@ class profileFragment : Fragment() {
         if (mAuth.currentUser != null) {
             //binding.btnLogout.visibility = View.VISIBLE
             binding.username.text = "Xin chào, "+ mAuth.currentUser?.displayName ?: "Cá nhân"
-        } else {
-            //binding.btnLogout.visibility = View.GONE
         }
-//        val isGoogleLoggedIn = mCredential
-    //        ?.selectedAccountName != null
-//        userViewModel.setGoogleLoggedIn(isGoogleLoggedIn)
     }
 
     override fun onDestroyView() {
@@ -370,87 +315,7 @@ class profileFragment : Fragment() {
         }
     }
 
-//    private fun createCalendarEvent() {
-//        val event = Event()
-//            .setSummary("Google I/O 2015")
-//            .setLocation("800 Howard St., San Francisco, CA 94103")
-//            .setDescription("A chance to hear more about Google's developer products.")
-//        val startDateTime = DateTime(System.currentTimeMillis())
-//        val start = EventDateTime()
-//            .setDateTime(startDateTime)
-//            .setTimeZone("Asia/Ho_Chi_Minh")
-//        event.start = start
-//        val endDateTime = DateTime(System.currentTimeMillis() + 3600000)
-//        val end = EventDateTime()
-//            .setDateTime(endDateTime)
-//            .setTimeZone("Asia/Ho_Chi_Minh")
-//        event.end = end
-//
-//        val reminderOverrides = listOf(
-//            EventReminder().setMethod("email").setMinutes(24 * 60),
-//            EventReminder().setMethod("popup").setMinutes(10))
-//
-//        val reminders = Event.Reminders()
-//            .setUseDefault(false)
-//            .setOverrides(reminderOverrides)
-//        event.reminders = reminders
-//
-//        val calendarId = "primary"
-//        val transport = AndroidHttp.newCompatibleTransport()
-//        val jsonFactory = JacksonFactory.getDefaultInstance()
-//        val service = Calendar.Builder(
-//            transport, jsonFactory, mCredential)
-//            .setApplicationName("Google Calendar API Android Quickstart")
-//            .build()
-//
-//        EventCreator(service, calendarId, event).execute()
-//    }
-private fun createCalendarEvent(dateString: String, timeStart: String, timeEnd: String) {
-    val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
-    val startDateTimeString = "$dateString $timeStart"
-    val endDateTimeString = "$dateString $timeEnd"
-
-    val startDate = dateFormat.parse(startDateTimeString)
-    val endDate = dateFormat.parse(endDateTimeString)
-
-    val startDateTime = DateTime(startDate)
-    val endDateTime = DateTime(endDate)
-
-    val event = Event()
-        .setSummary("Google I/O 2015")
-        .setLocation("800 Howard St., San Francisco, CA 94103")
-        .setDescription("A chance to hear more about Google's developer products.")
-    val start = EventDateTime()
-        .setDateTime(startDateTime)
-        .setTimeZone("Asia/Ho_Chi_Minh")
-    event.start = start
-    val end = EventDateTime()
-        .setDateTime(endDateTime)
-        .setTimeZone("Asia/Ho_Chi_Minh")
-    event.end = end
-
-    val reminderOverrides = listOf(
-        EventReminder().setMethod("email").setMinutes(24 * 60),
-        EventReminder().setMethod("popup").setMinutes(10))
-
-    val reminders = Event.Reminders()
-        .setUseDefault(false)
-        .setOverrides(reminderOverrides)
-    event.reminders = reminders
-
-    val calendarId = "primary"
-    val transport = AndroidHttp.newCompatibleTransport()
-    val jsonFactory = JacksonFactory.getDefaultInstance()
-    val service = Calendar.Builder(
-        transport, jsonFactory, mCredential)
-        .setApplicationName("Google Calendar API Android Quickstart")
-        .build()
-
-
-    EventCreator(service, calendarId, event).execute()
-
-}
 
 
     private fun initCredentials() {
@@ -467,39 +332,7 @@ private fun createCalendarEvent(dateString: String, timeStart: String, timeEnd: 
         userViewModel.setCredential(mCredential)
     }
 
-    private inner class EventCreator(
-        val service: Calendar,
-        val calendarId: String,
-        val event: Event
-    ) : AsyncTask<Void, Void, Event?>() {
 
-        override fun doInBackground(vararg params: Void?): Event? {
-            return try {
-                service.events().insert(calendarId, event).execute()
-            } catch (e: Exception) {
-                e.printStackTrace()
-                cancel(true)
-                null
-            }
-        }
-
-        override fun onPreExecute() {
-            super.onPreExecute()
-            mProgress!!.show()
-        }
-
-        override fun onPostExecute(result: Event?) {
-            super.onPostExecute(result)
-            Log.d("ProfileFragment", result.toString())
-            Toast.makeText(requireContext(), "Event created successfully", Toast.LENGTH_SHORT).show()
-            mProgress!!.hide()
-        }
-
-        override fun onCancelled() {
-            super.onCancelled()
-            mProgress!!.hide()
-        }
-    }
 
     fun showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode: Int) {
         val apiAvailability = GoogleApiAvailability.getInstance()
@@ -510,18 +343,14 @@ private fun createCalendarEvent(dateString: String, timeStart: String, timeEnd: 
         dialog?.show()
     }
     private fun unlinkGoogleAccount() {
-        // Xóa tài khoản đã lưu trong SharedPreferences
         val settings = requireActivity().getPreferences(Context.MODE_PRIVATE)
         val editor = settings.edit()
         editor.remove(PREF_ACCOUNT_NAME)
         editor.apply()
-
-        // Thiết lập lại thông tin xác thực
         mCredential?.setSelectedAccountName(null)
         mCredential = null
         //userViewModel.setCredential(null)
         initCredentials()
-
         showToast(requireContext(), "Đã thoát liên kết tài khoản Google")
         userViewModel.setGoogleLoggedIn(false)
     }
@@ -564,86 +393,6 @@ private fun createCalendarEvent(dateString: String, timeStart: String, timeEnd: 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
-    }
-    private fun createCalendarEvent(event: com.hoangdoviet.finaldoan.model.Event) {
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-
-        val startDateTimeString = "${event.date} ${event.timeStart}"
-        val endDateTimeString = "${event.date} ${event.timeEnd}"
-
-        val startDate = dateFormat.parse(startDateTimeString)
-        val endDate = dateFormat.parse(endDateTimeString)
-
-        val startDateTime = DateTime(startDate)
-        val endDateTime = DateTime(endDate)
-
-        val event = com.google.api.services.calendar.model.Event()
-            .setSummary(event.title)
-            .setLocation("Hà Nội, Việt Nam")
-            .setDescription("Đặt lịch bởi ứng dụng HoangLich")
-        val start = EventDateTime()
-            .setDateTime(startDateTime)
-            .setTimeZone("Asia/Ho_Chi_Minh")
-        event.start = start
-        val end = EventDateTime()
-            .setDateTime(endDateTime)
-            .setTimeZone("Asia/Ho_Chi_Minh")
-        event.end = end
-
-        val reminderOverrides = listOf(
-            EventReminder().setMethod("email").setMinutes(24 * 60),
-            EventReminder().setMethod("popup").setMinutes(10))
-
-        val reminders = com.google.api.services.calendar.model.Event.Reminders()
-            .setUseDefault(false)
-            .setOverrides(reminderOverrides)
-        event.reminders = reminders
-
-        val calendarId = "primary"
-        val transport = AndroidHttp.newCompatibleTransport()
-        val jsonFactory = JacksonFactory.getDefaultInstance()
-        val service = com.google.api.services.calendar.Calendar.Builder(
-            transport, jsonFactory, mCredential)
-            .setApplicationName("Google Calendar API Android Quickstart")
-            .build()
-        Log.d("checkkklogin", mCredential.toString())
-        EventCreator1(service, calendarId, event).execute()
-    }
-    //AsyncTask này xử lý việc tạo sự kiện lịch trong nền, hiển thị và ẩn hộp thoại tiến trình khi cần thiết.
-    private inner class EventCreator1 internal constructor(val service: com.google.api.services.calendar.Calendar, //ược sử dụng để truy cập các phương thức của Google Calendar API.
-                                                          val calendarId: String, //D của lịch trên Google Calendar mà sự kiện sẽ được thêm vào. Thông thường, giá trị này là "primary" cho lịch chính của người dùng.
-                                                          val event: Event,
-                                                         )  : //Thông tin xác thực (GoogleAccountCredential) được sử dụng để xác thực và ủy quyền các yêu cầu API.
-        AsyncTask<Void, Void, Event?>() {
-        //AsyncTask được sử dụng để thực hiện các tác vụ nền mà không làm gián đoạn giao diện người dùng.
-
-        override fun doInBackground(vararg params: Void?): Event? {
-            return try {
-                service.events().insert(calendarId, event).execute()
-            } catch (e: Exception) {
-                e.printStackTrace()
-                cancel(true)
-                null
-            }
-        }
-
-        override fun onPreExecute() { // Phương thức này chạy trên luồng giao diện người dùng trước khi
-            super.onPreExecute()
-            mProgress!!.show()
-        }
-
-        override fun onPostExecute(result: Event?) {
-            //Phương thức này chạy trên luồng giao diện người dùng sau khi doInBackground hoàn thành. Nó nhận kết quả là một đối tượng Event.
-            super.onPostExecute(result)
-            Log.d("MainActivity", result.toString())
-            Toast.makeText(requireContext(), "Event created successfully", Toast.LENGTH_SHORT).show()
-            mProgress!!.hide()
-        }
-
-        override fun onCancelled() {
-            super.onCancelled()
-            mProgress!!.hide()
-        }
     }
 }
 

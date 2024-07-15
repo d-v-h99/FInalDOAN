@@ -40,7 +40,6 @@ class ThoiGianConVat(millisTime: Long?) {
         var hours1: Long //hours start in array
         var hours2: Long //hours now
         var hours3: Long //hours end in arrar
-        //Xác định giờ hiện tại thuộc canh giờ nào dựa trên các khoảng thời gian đã định nghĩa trước trong từng tháng.
         when (month) {
             1 -> {
                 arrStart = arrayListOf("23:30", "01:30", "03:30", "05:30", "07:30", "09:30", "11:30", "13:30", "15:30", "17:30", "19:30", "21:30")
@@ -95,10 +94,10 @@ class ThoiGianConVat(millisTime: Long?) {
 
         var finded = 0
 
-        for (i in 0 until arrStart.size) { // lap tu 0 den arrrStart.size - 1
-            hours1 = hoursFormat.parse(arrStart[i]).time //hours start in array
-            hours2 = hoursFormat.parse(hours).time //hours current
-            hours3 = hoursFormat.parse(arrEnd[i]).time //hours end in array
+        for (i in 0 until arrStart.size) {
+            hours1 = hoursFormat.parse(arrStart[i]).time
+            hours2 = hoursFormat.parse(hours).time
+            hours3 = hoursFormat.parse(arrEnd[i]).time
             if (hours2 >= hours1 && hours2 < hours3) {
                 finded = 1
                 //Log.d("Gio"," ${arrName[i]}")
@@ -106,7 +105,6 @@ class ThoiGianConVat(millisTime: Long?) {
             }
         }
         if (finded == 0) {
-            //ếu không tìm thấy canh giờ phù hợp, kiểm tra xem tháng hiện tại có phải là tháng 4, 5, hay 6 không. Nếu đúng, trả về tên con giáp cuối cùng trong mảng arrStart. Nếu không, trả về tên con giáp đầu tiên trong mảng arrStart.
             if (month == 4 || month == 5 || month == 6) {
                 //Log.d("Gio", arrName[arrStart.size - 1])
                 return arrName[arrStart.size - 1]
@@ -116,20 +114,14 @@ class ThoiGianConVat(millisTime: Long?) {
         }
         return "null"
     }
-    //Xử lý trường hợp không tìm thấy canh giờ phù hợp:
-    //
-    //Nếu không tìm thấy canh giờ phù hợp trong vòng lặp, kiểm tra xem tháng hiện tại có phải là tháng 4, 5, hay 6 không.
-    //Nếu đúng, trả về tên con giáp cuối cùng trong mảng arrName. Điều này có nghĩa là trong các tháng này, nếu thời gian hiện tại không nằm trong bất kỳ khoảng thời gian nào được định nghĩa, thì mặc định chọn canh giờ cuối cùng của ngày (tương ứng với con giáp cuối cùng trong mảng).
-    //Nếu không phải là tháng 4, 5, hay 6, trả về tên con giáp đầu tiên trong mảng arrName. Điều này có nghĩa là trong các tháng còn lại, nếu thời gian hiện tại không nằm trong bất kỳ khoảng thời gian nào được định nghĩa, thì mặc định chọn canh giờ đầu tiên của ngày (tương ứng với con giáp đầu tiên trong mảng).
+
 
     fun getNamConVat(year: Int): String {
         val can = arrCanYear[year % 10]
         val chi = arrChi[year % 12]
         //Log.d("Nam:", "$can $chi")
         return "$can $chi"
-        //year % 10 tính phần dư của năm dương lịch khi chia cho 10. Kết quả này nằm trong khoảng từ 0 đến 9 và được sử dụng để xác định thiên can của năm.
-        //Mảng arrCanYear chứa các giá trị của thiên can theo thứ tự
-        //year % 12 tính phần dư của năm dương lịch khi chia cho 12. Kết quả này nằm trong khoảng từ 0 đến 11 và được sử dụng để xác định địa chi của năm.
+
     }
 
     fun getNamConVat(): String {

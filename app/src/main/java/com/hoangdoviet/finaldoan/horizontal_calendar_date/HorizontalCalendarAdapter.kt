@@ -44,10 +44,8 @@ class HorizontalCalendarAdapter(
         val itemList = list[position]
         holder.calendarDay.text = itemList.calendarDay
         holder.calendarDate.text = itemList.calendarDate
-
-        // Add red dot if the day has an event
         if (itemList.hasEvent) {
-            val spannableString = SpannableString("${itemList.calendarDate} \u25CF") // Unicode for a filled circle
+            val spannableString = SpannableString("${itemList.calendarDate} \u25CF")
             val dotSpan = ForegroundColorSpan(ContextCompat.getColor(holder.itemView.context, R.color.color3))
             spannableString.setSpan(dotSpan, spannableString.length - 1, spannableString.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             holder.calendarDate.text = spannableString

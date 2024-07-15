@@ -27,14 +27,14 @@ class AlarmReceiver : BroadcastReceiver() {
 
         val notificationManager = context?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Tạo kênh thông báo cho Android Oreo trở lên
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
             val notificationChannel = NotificationChannel(channelId, channelName, importance)
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
-        // Tạo intent để mở MainActivity khi người dùng nhấn vào thông báo
+
         val activityIntent = Intent(context, MainActivity::class.java).apply {
             putExtra("EVENT_DATE", eventDate)
             putExtra("TARGET_FRAGMENT", "MonthFragment")
@@ -51,7 +51,7 @@ class AlarmReceiver : BroadcastReceiver() {
         Log.d("AlarmReceiver", "showNotification: Creating notification for eventDate=$eventDate")
 
         val notification = NotificationCompat.Builder(context!!, channelId)
-            .setSmallIcon(R.drawable.ic_notification) // Đặt icon cho thông báo
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Thông báo sự kiện")
             .setContentText(content)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

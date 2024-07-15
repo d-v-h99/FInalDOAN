@@ -22,8 +22,6 @@ class AuthViewModel : ViewModel() {
     private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val mFirestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
 
-    //_loginStatus: MutableLiveData giữ trạng thái đăng nhập được bọc trong một đối tượng Resource.
-    //loginStatus: LiveData công khai để quan sát trạng thái đăng nhập.
     private val _loginStatus: MutableLiveData<Resource<LoginUiState>> = MutableLiveData()
     val loginStatus: LiveData<Resource<LoginUiState>> = _loginStatus
 
@@ -42,16 +40,15 @@ class AuthViewModel : ViewModel() {
     fun login(email: String , password: String){
         viewModelScope.launch(Dispatchers.IO){
             try {
-                _loginStatus.postValue(Resource.loading()) //Đặt trạng thái đăng nhập thành đang tải.
+                _loginStatus.postValue(Resource.loading())
                 mAuth.signInWithEmailAndPassword(email, password).await()
-                // Get current user's ID and username.
+
                 val currentUserUid = mAuth.currentUser?.uid!!
                 val currentUsername = mAuth.currentUser?.displayName!!
                 val currentUserRef = mFirestore.collection("User")
                     .document(currentUserUid)
                 val currentUser: DocumentSnapshot = currentUserRef.get().await()
                 val currentUserInfoExist = currentUser.exists()
-                // Lấy giá trị isAdmin từ tài liệu người dùng trong Firestore
                 val loginUiState = LoginUiState(
                     username = currentUsername,
                     email = email,
@@ -72,23 +69,16 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _signupStatus.postValue(Resource.loading())
-
-                // Register the new user with the provided email and password.
                 mAuth.createUserWithEmailAndPassword(email, password).await()
-
-                // Update the user's display name to the provided username.
                 val currentUser = mAuth.currentUser!!
                 val profileBuilder = UserProfileChangeRequest.Builder()
                 val currentUserProfile = profileBuilder.setDisplayName(username).build()
                 currentUser.updateProfile(currentUserProfile).await()
                 val userFireBase = mFirestore.collection("User").document(currentUser.uid)
                 userFireBase.set(LoginUiState(username, email))
-
-                // Post the success status along with the username and email of the newly registered user.
                 val signupState = Pair(username, email)
                 _signupStatus.postValue(Resource.success(signupState))
             } catch (error: FirebaseAuthUserCollisionException) {
-                // Post an error status if the provided email already exists in the system.
                 _signupStatus.postValue(Resource.error("Email already exists."))
             }
         }

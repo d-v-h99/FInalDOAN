@@ -38,7 +38,6 @@ class FirebaseHelper {
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    // Handle possible errors.
                 }
             })
         }

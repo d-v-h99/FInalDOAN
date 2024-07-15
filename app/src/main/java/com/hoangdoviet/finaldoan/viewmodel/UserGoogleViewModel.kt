@@ -33,4 +33,3 @@ class UserGoogleViewModel(application: Application) : AndroidViewModel(applicati
     }
 }
 
-//Nếu bạn gặp vấn đề với LiveData không phát hiện sự kiện, hãy thử sử dụng phương pháp postValue thay vì setValue trong ViewModel. postValue sẽ đảm bảo cập nhật LiveData trên main thread nếu bạn gọi nó từ background thread.

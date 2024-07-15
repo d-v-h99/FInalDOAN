@@ -51,11 +51,7 @@ class loginFragment : Fragment() {
                 Status.LOADING -> {loadingDialog.show()}
                 Status.SUCCESS -> {
                     val currentUser = loginState.data!!
-                    //showToast(requireContext(), getString(R.string.auth_pass))
                     loadingDialog.dismiss()
-//                    val action = loginFragmentDirections.actionLoginFragment2ToMainActivity(currentUser)
-//                    findNavController().navigate(action)
-//                    findNavController().navigate(R.id.action_loginFragment2_to_mainActivity)
                     val intent = Intent(activity, MainActivity::class.java).apply {
                         putExtra("loginUiState", currentUser)
                     }

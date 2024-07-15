@@ -79,7 +79,11 @@ object DateScheduler {
         // Biểu thức chính quy để phát hiện các từ chỉ thời gian và ngày
         val sentence = sentence.replace("tư", "tu")
         val temporalPattern = """
-        \b(?:mai|ngày mai|ngày kia|hôm nay|chiều nay|tối nay|buổi sáng|buổi trưa|buổi chiều|buổi tối|sáng mai|chiều mai|tối mai|sáng ngày kia|chiều ngày kia|tối ngày kia|thứ hai|thứ ba|thứ tu|thứ năm|thứ sáu|thứ bảy|chủ nhật|tháng một|tháng hai|tháng ba|tháng tu|tháng năm|tháng sáu|tháng bảy|tháng tám|tháng chín|tháng mười|tháng mười một|tháng mười hai|tuần này|tuần sau|tuần tới|ngày \d{1,2} tháng \d{1,2}|ngày \d{1,2} tháng này|ngày \d{1,2} tháng sau)\b
+        \b(?:mai|ngày mai|ngày kia|hôm nay|chiều nay|tối nay|buổi sáng|buổi trưa|buổi chiều|buổi tối|sáng mai|
+        chiều mai|tối mai|sáng ngày kia|chiều ngày kia|tối ngày kia|thứ hai|thứ ba|thứ tu|thứ năm|thứ sáu|thứ bảy
+        |chủ nhật|tháng một|tháng hai|tháng ba|tháng tu|tháng năm|tháng sáu|tháng bảy|tháng tám|tháng chín|
+        tháng mười|tháng mười một|tháng mười hai|tuần này|tuần sau|tuần tới|
+        ngày \d{1,2} tháng \d{1,2}|ngày \d{1,2} tháng này|ngày \d{1,2} tháng sau)\b
     """.trimIndent()
 
         val pattern = Pattern.compile(temporalPattern, Pattern.CASE_INSENSITIVE)

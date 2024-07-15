@@ -63,9 +63,7 @@ class forgotPassFragment : Fragment() {
             btnBackToLogin.setOnClickListener {
                 findNavController().popBackStack()
             }
-
             etEmailContainer.addTextWatcher()
-
             btnResetPassword.setOnClickListener {
                 val email = etEmail.getInputValue()
                 if(email.isEmpty()){

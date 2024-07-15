@@ -107,7 +107,6 @@ object HolidayData {
             "30/12" to "Lễ Tất Niên\nÂm lịch 30/12"
         )
 
-        // Chuyển đổi các ngày lễ âm lịch sang dương lịch và thêm vào danh sách ngày lễ hiện có
         lunarHolidays.forEach { (lunarDate, description) ->
             val (lunarDay, lunarMonth) = lunarDate.split("/").map { it.toInt() }
             val solarDateString = LunarCalendar().lunar2solar(y, lunarMonth, lunarDay, false, 7f)
@@ -126,7 +125,6 @@ object HolidayData {
             holidays.getOrPut(month) { mutableListOf() }.add(holiday)
         }
 
-        // Sắp xếp các ngày lễ trong từng tháng
         holidays.forEach { (month, holidayList) ->
             holidayList.sortBy { holiday ->
                 val dateFormat = SimpleDateFormat("dd/MM", Locale.getDefault())

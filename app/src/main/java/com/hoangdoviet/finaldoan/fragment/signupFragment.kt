@@ -83,14 +83,6 @@ class signupFragment : Fragment() {
             }
         }
     }
-//    private fun createLoginText(): SpannableString {
-//        val loginText = SpannableString(getString(R.string.login_prompt))
-//        val color = ContextCompat.getColor(requireActivity(), R.color.on_boarding_span_text_color)
-//        val loginColor = ForegroundColorSpan(color)
-//        loginText.setSpan(UnderlineSpan(), 25, loginText.length, 0)
-//        loginText.setSpan(loginColor, 25, loginText.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
-//        return loginText
-//    }
     private fun clearField() {
         binding.etUsername.clearText()
         binding.etEmail.clearText()

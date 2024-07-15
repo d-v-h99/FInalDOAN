@@ -62,11 +62,11 @@ class FormTaskFragment : SuperBottomSheetFragment() {
             textDatePicker = formatDate(date, false)
         }
             .setType(booleanArrayOf(true, true, true, false, false, false))
-            .isDialog(true) //默认设置false ，内部实现将DecorView 作为它的父控件。
-            .setCancelText("Huỷ")//取消按钮文字
-            .setSubmitText("Xác nhận")//确认按钮文字
+            .isDialog(true)
+            .setCancelText("Huỷ")
+            .setSubmitText("Xác nhận")
             .addOnCancelClickListener { Log.i("pvTime", "onCancelClickListener") }
-            .setItemVisibleCount(5) //若设置偶数，实际值会加1（比如设置6，则最大可见条目为7）
+            .setItemVisibleCount(5)
             .setLineSpacingMultiplier(4.0f)
             .isAlphaGradient(false)
             .build()
@@ -81,8 +81,8 @@ class FormTaskFragment : SuperBottomSheetFragment() {
         params.rightMargin = 0
         picker.dialogContainerLayout.layoutParams = params
         mDialog.window?.apply {
-            setWindowAnimations(com.bigkoo.pickerview.R.style.picker_view_slide_anim) //修改动画样式
-            setGravity(Gravity.BOTTOM) //改成Bottom,底部显示
+            setWindowAnimations(com.bigkoo.pickerview.R.style.picker_view_slide_anim)
+            setGravity(Gravity.BOTTOM)
             setDimAmount(0.3f)
         }
         picker
@@ -102,12 +102,6 @@ class FormTaskFragment : SuperBottomSheetFragment() {
         } else return "$year$month$day"
 
     }
-
-//    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-//        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-//        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-//        return dialog
-//    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -147,13 +141,9 @@ class FormTaskFragment : SuperBottomSheetFragment() {
         val db = FirebaseFirestore.getInstance()
         val taskId = db.collection("Tasks").document().id
         val task = Task(id = taskId, title = title, status = "Chưa làm")
-
-        // Thêm task vào collection Tasks
         db.collection("Tasks").document(taskId).set(task)
             .addOnSuccessListener {
                 Log.d("TaskActivity", "Task added to Tasks collection successfully")
-
-                // Tạo ID cho TasksByDate document kết hợp từ date và userId
                 val tasksByDateId = "$date-$userId"
                 val tasksByDateRef = db.collection("TasksByDate").document(tasksByDateId)
 
@@ -161,11 +151,9 @@ class FormTaskFragment : SuperBottomSheetFragment() {
                     if (task.isSuccessful) {
                         val document = task.result
                         if (document != null && document.exists()) {
-                            // Nếu tài liệu tồn tại, cập nhật taskIds
                             tasksByDateRef.update("taskIds", FieldValue.arrayUnion(taskId))
                                 .addOnSuccessListener {
                                     Log.d("TaskActivity", "Task added to TasksByDate collection successfully")
-                                    // Cập nhật taskIds trong User
                                     db.collection("User").document(userId)
                                         .update("taskIds", FieldValue.arrayUnion(taskId))
                                         .addOnSuccessListener {
@@ -180,14 +168,12 @@ class FormTaskFragment : SuperBottomSheetFragment() {
                                     Log.e("TaskActivity", "Failed to update TasksByDate", e)
                                 }
                         } else {
-                            // Nếu tài liệu không tồn tại, tạo mới và cập nhật taskIds
                             val newTaskDate = hashMapOf(
                                 "taskIds" to arrayListOf(taskId)
                             )
                             tasksByDateRef.set(newTaskDate)
                                 .addOnSuccessListener {
                                     Log.d("TaskActivity", "TaskByDate document created successfully")
-                                    // Cập nhật taskIds trong User
                                     db.collection("User").document(userId)
                                         .update("taskIds", FieldValue.arrayUnion(taskId))
                                         .addOnSuccessListener {

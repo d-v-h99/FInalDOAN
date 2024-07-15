@@ -48,14 +48,6 @@ class HorizontalCalendarSetUp {
             calendarList2.forEachIndexed { index, calendarModel ->
                 calendarModel.isSelected = index == position
             }
-
-//            recyclerView.post {
-//                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-//                layoutManager.scrollToPositionWithOffset(
-//                    position,
-//                    (recyclerView.width / 2) - (recyclerView.getChildAt(0)?.width ?: 0) / 2
-//                )
-//            }
         }
         adapter.setData(calendarList2)
         recyclerView.adapter = adapter
@@ -96,10 +88,6 @@ class HorizontalCalendarSetUp {
 
         monthCalendar.set(Calendar.DAY_OF_MONTH, 1)
         val today = Calendar.getInstance()
-//        today.set(Calendar.YEAR, 2024)
-//        today.set(Calendar.MONTH, Calendar.JUNE)
-//        today.set(Calendar.DAY_OF_MONTH, 21)
-
         for (day in 1..maxDaysInMonth) {
             val isToday = (day == today.get(Calendar.DAY_OF_MONTH))
             calendarList.add(CalendarDateModel(monthCalendar.time, isToday))

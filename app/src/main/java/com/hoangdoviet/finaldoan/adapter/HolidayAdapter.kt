@@ -1,21 +1,27 @@
 package com.hoangdoviet.finaldoan.adapter
 
+import android.content.Context
+import android.graphics.Color
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.ai.client.generativeai.GenerativeModel
+import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.databinding.HolidayItemBinding
 import com.hoangdoviet.finaldoan.model.Holiday
 
-class HolidaysAdapter(private var holidays: List<Holiday>) :
+class HolidaysAdapter(private var holidays: List<Holiday>, private val context: Context) :
     RecyclerView.Adapter<HolidaysAdapter.HolidayViewHolder>() {
 
     inner class HolidayViewHolder(private val binding: HolidayItemBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(holiday: Holiday, isLastItem: Boolean) {
             binding.holidayDate.text = holiday.date
             binding.holidayDescription.text = holiday.description
-            // Hide the view divider if it's the last item
+            binding.holidayDescription.setTextColor(if (holiday.isHoliday) ContextCompat.getColor(context, R.color.grey) else Color.BLACK)
+            //
             binding.viewDivider.visibility = if (isLastItem) View.GONE else View.VISIBLE
         }
     }
@@ -37,7 +43,7 @@ class HolidaysAdapter(private var holidays: List<Holiday>) :
         notifyDataSetChanged()
     }
 
-    fun clearData(){
+    fun clearData() {
         holidays = emptyList()
         notifyDataSetChanged()
     }

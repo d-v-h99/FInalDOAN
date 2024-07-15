@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#FFF1E5"
     tools:context=".fragment.forgotPassFragment">
     <TextView
         android:id="@+id/tvForgetPassHeading"
@@ -59,6 +58,7 @@
             android:layout_height="wrap_content"
             android:layout_marginVertical="16dp"
             android:hint="@string/field_email"
+            android:textColorHint="@color/black"
             app:boxStrokeColor="@color/box_stroke_color"
             app:errorEnabled="true"
             app:hintTextColor="@color/text_color"

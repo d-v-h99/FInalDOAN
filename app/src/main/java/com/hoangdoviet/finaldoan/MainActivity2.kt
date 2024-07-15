@@ -48,6 +48,7 @@ import com.hoangdoviet.finaldoan.fragment.profileFragment.Companion.PREF_ACCOUNT
 import com.hoangdoviet.finaldoan.model.Event
 import com.hoangdoviet.finaldoan.model.EventCreator
 import com.hoangdoviet.finaldoan.model.Message
+import com.hoangdoviet.finaldoan.model.Task
 import com.hoangdoviet.finaldoan.utils.Constants
 import com.hoangdoviet.finaldoan.utils.DateScheduler
 import com.hoangdoviet.finaldoan.utils.Time
@@ -87,10 +88,8 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     lateinit var hashMap: HashMap<Int, Triple<String, String, String>>
     var messagesList = mutableListOf<Message>()
     val generativeModel = GenerativeModel(
-        // For text-only input, use the gemini-pro model
         modelName = "gemini-pro",
         apiKey = "AIzaSyB0uf8m7jwu9AjNBL1Ri6g437qJX5Q1e_s"
-        // ENTER YOUR KEY
     )
     private val mAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private  var firebaseHelper: FirebaseHelper = FirebaseHelper()
@@ -103,20 +102,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
         binding = ActivityMain2Binding.inflate(layoutInflater)
         setContentView(binding.root)
         initCredentials()
-//        val event = Event(
-//            eventID = generateEventId(),
-//            date = "18/06/2024",
-//            title = "Ktra giong noi4",
-//            timeStart = "13:50",
-//            timeEnd = "13:52",
-//            repeat = 1
-//        )
-//        if (mCredential?.selectedAccountName != null) {
-//            createCalendarEvent(event,null)  // Ví dụ với loại lặp lại hàng ngày
-//        } else {
-//            // Yêu cầu người dùng chọn tài khoản Google
-//            chooseAccount()
-//        }
         val toolbar: Toolbar = binding.toolbar
         setSupportActionBar(toolbar)
         //recyclerView()
@@ -144,19 +129,15 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 binding.reyclerviewMessageList.scrollToPosition(adapter.itemCount - 1)
             }
         }
-        // Get the ViewModel instance
         viewModel = ViewModelProvider(this).get(UserGoogleViewModel::class.java)
-//        viewModel.setGoogleLoggedIn(viewModel.isGoogleLoggedIn.value ?: false)
         viewModel.isGoogleLoggedIn.observe(this, Observer { isLoggedIn ->
             checklogin = isLoggedIn
             if (isLoggedIn) {
-               // showToast(this, "Đã đăng nhập")
                 Log.d("checkdangnhap", "Đăng nhập rồi")
                 if (mCredential?.selectedAccountName == null){
                     chooseAccount()
                 }
             } else {
-              //  showToast(this, "Đã thoát")
                 Log.d("checkdangnhap", "Chưa đăng nhập")
             }
         })
@@ -212,13 +193,10 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
     private fun setup() {
-        // setup rcv
         adapter = MessageAdapter()
         binding.reyclerviewMessageList.adapter = adapter
         binding.reyclerviewMessageList.layoutManager = LinearLayoutManager(this)
-        // layout
         binding.layoutChatbox.visibility = View.INVISIBLE
-        //
         binding.buttonChatboxSend.setOnClickListener {
             tts.stop()
             val text: String = binding.edittextChatbox.text.toString()
@@ -240,7 +218,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 System.currentTimeMillis().toString()
             )
         )
-        //readCsvMessage()
         adapter.insertMessage(
             Message(
                 "Chào bạn, Tôi có thể giúp gì cho bạn!",
@@ -255,7 +232,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun setUiRecognition() {
-        // setup Speech Recognition
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         binding.recognitionView.setSpeechRecognizer(speechRecognizer)
         binding.recognitionView.setRecognitionListener(object : RecognitionListenerAdapter() {
@@ -319,12 +295,10 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun KeyboardToSpeech() {
         binding.layoutChatbox.setVisibility(View.INVISIBLE)
-        binding.layoutSpeech!!.visibility =
-            View.VISIBLE // dấu !! kotlin => biến k thể NULL cho phép truy cập an toàn
-        // tạo đối tượng params => dùng xđ kích thước layout_speech trong bố cục cha giả định là frameLayout
+        binding.layoutSpeech!!.visibility = View.VISIBLE
         val params = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT, //Đặt chiều rộng của layout_speech để khớp với toàn bộ chiều rộng của bố cục cha của nó.
-            FrameLayout.LayoutParams.WRAP_CONTENT //Đặt chiều cao của layout_speech để tự động điều chỉnh dựa trên nội dung của nó.
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
         )
         params.setMargins(0, 0, 0, 410)
         closeKeyboard()
@@ -394,12 +368,10 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun sendMessage(text: String) {
-        //val message = binding.etMessage.text.toString()
         val message = text
         val timeStamp = Time.timeStamp()
 
         if (message.isNotEmpty()) {
-            //Adds it to our local list
             messagesList.add(Message(message, Constants.SEND_ID, timeStamp))
             binding.edittextChatbox.setText("")
             // Hiển thị loading indicator
@@ -414,7 +386,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun botResponse(message: String) {
         val timeStamp = Time.timeStamp()
-        // Khai báo một CoroutineScope
         val scope = CoroutineScope(Dispatchers.Main)
         GlobalScope.launch {
             var responseText = ""
@@ -539,11 +510,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                         responseText =
                             getGiaXangFromUrlAsync("https://vnexpress.net/chu-de/gia-xang-dau-3026").await()
                     }
-
-//                    message.toLowerCase().contains("xổ số") -> {
-//                        responseText =
-//                            getXoSoFromUrlAsync("https://api-xsmb.cyclic.app/api/v1").await()
-//                    }
                     message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("âm lịch")||
                             message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("ngày rằm")||
                             message.toLowerCase().contains("đặt lịch") && message.toLowerCase().contains("rằm")-> {
@@ -624,6 +590,28 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                         }
 
                     }
+                    message.toLowerCase().contains("thêm nhiệm vụ") -> {
+                        val content = DateScheduler.getStringAfterKeyword(message)
+                        val listWordDate = DateScheduler.extractTemporalWords(message)
+                        Log.d("checkTIme", listWordDate.toString())
+                        val Date = DateScheduler.checktime(listWordDate)
+                        val currentUserUid = mAuth.currentUser?.uid
+                        if (currentUserUid.isNullOrEmpty()){
+                            responseText = "Đăng nhập để sử dụng tính năng trên"
+                        }
+                        else {
+                            responseText = "\n"+content+"\n"+Date
+                             if (content.isNullOrEmpty())   responseText = "Bạn cần thêm thêm từ nội dung để đặt lịch\n Ví dụ đặt lịch cho tôi ngày mai lúc 10 giờ sáng với NỘI DUNG đi học toán"
+                            else if(listWordDate.isEmpty())  responseText = "Bạn cần thêm thêm các từ chỉ ngày để xác định ngày đặt lịch ví dụ hôm nay , ngày mai, thứ hai tuần sau \n Ví dụ đặt lịch cho tôi NGÀY MAI lúc 10 giờ sáng với nội dung đi học toán"
+                            else if (Date.isNullOrEmpty()) responseText = "Không thể xác định các từ thời gian. Thử lại"
+                            else if (Date.contains("Lỗi vì ngày")) responseText = "Thời gian đặt lịch đã quá hạn, Vui lòng nói thời gian hợp lệ"
+                            else {
+                                 responseText = "Thêm nhiệm vụ thành công\n $content vào ngày ${convertDateString(Date)}"
+                                 Log.d("Checktime",convertDateString1(Date) )
+                                 addTask(currentUserUid, convertDateString1(Date), content)
+                             }
+                        }
+                    }
                     message.toLowerCase().contains("hôm nay") && message.toLowerCase().contains("sự kiện") -> {
                         val currentUserUid = mAuth.currentUser?.uid
                         if(currentUserUid == null){
@@ -649,9 +637,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                         }
 
                     }
-                    message.toLowerCase().contains("kiểm tra") -> {
-                        responseText = DateScheduler.extractLunarDate(message)
-                    }
                     else -> {
                         val response = generativeModel.generateContent(message)
                         responseText = response?.text ?: "Không có câu trả lời"
@@ -671,7 +656,6 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
                 } else {
                     playNews(responseText)
                 }
-//Thread { writeCsvMessage() }.start()
 
             }
         }
@@ -762,40 +746,7 @@ class MainActivity2 : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     }
 
-    //    private suspend fun getEventsByUserAndDate(userId: String, date: String): List<Event> {
-//        return withContext(Dispatchers.IO) {
-//            try {
-//                val db = FirebaseFirestore.getInstance()
-//                val userRef = db.collection("User").document(userId)
-//
-//                Log.d("getEventsByUserAndDate", "Fetching user document for userId: $userId")
-//                val userDocument = userRef.get().await()
-//                Log.d("getEventsByUserAndDate", "User document fetched: $userDocument")
-//
-//                val eventIds = userDocument.get("eventID") as? List<String> ?: emptyList()
-//                Log.d("getEventsByUserAndDate", "Event IDs: $eventIds")
-//
-//                if (eventIds.isEmpty()) {
-//                    Log.d("getEventsByUserAndDate", "No event IDs found for user.")
-//                    return@withContext emptyList<Event>()
-//                }
-//
-//                val eventsRef = db.collection("Events")
-//                Log.d("getEventsByUserAndDate", "Fetching events for date: $date")
-//                val eventsSnapshot = eventsRef.whereIn("eventID", eventIds)
-//                    .whereEqualTo("date", date)
-//                    .get()
-//                    .await()
-//
-//                Log.d("getEventsByUserAndDate", "Events snapshot: $eventsSnapshot")
-//                eventsSnapshot.toObjects(Event::class.java)
-//            } catch (e: Exception) {
-//                Log.e("getEventsByUserAndDate", "Error fetching events", e)
-//                e.printStackTrace()
-//                emptyList()
-//            }
-//        }
-//    }
+
 private suspend fun getEventsByUserAndDate(userId: String, date: String): List<Event> {
     return withContext(Dispatchers.IO) {
         try {
@@ -813,11 +764,7 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
                 Log.d("Firestore", "No event IDs to query")
                 return@withContext emptyList<Event>()
             }
-
-            // Tạo danh sách để lưu kết quả
             val resultEvents = mutableListOf<Event>()
-
-            // Giới hạn danh sách eventID để tránh lỗi quá giới hạn của Firestore
             for (chunk in eventIds.chunked(30)) {
                 val eventsRef = db.collection("Events")
                 val eventsSnapshot = eventsRef.whereIn("eventID", chunk)
@@ -827,14 +774,10 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
 
                 val events = eventsSnapshot.toObjects(Event::class.java)
                 resultEvents.addAll(events)
-
-                // Kiểm tra nếu đã đủ 10 sự kiện
                 if (resultEvents.size >= 10) {
                     break
                 }
             }
-
-
             resultEvents
         } catch (e: Exception) {
             e.printStackTrace()
@@ -843,21 +786,16 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
         }
     }
 }
-
-
-
-
-
-
     fun convertDateString(inputDate: String): String {
-        // Định dạng đầu vào
         val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        // Định dạng đầu ra
         val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-
-        // Phân tích chuỗi đầu vào thành đối tượng Date
         val date = inputFormat.parse(inputDate)
-        // Định dạng lại đối tượng Date thành chuỗi theo định dạng đầu ra
+        return outputFormat.format(date)
+    }
+    fun convertDateString1(inputDate: String): String {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+        val date = inputFormat.parse(inputDate)
         return outputFormat.format(date)
     }
     fun addOneHourToTime(time: String): String {
@@ -873,15 +811,10 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
     }
 
     private suspend fun callGetArticle(url: String) {
-        // Khởi tạo một coroutine scope
         titleArticle = "Hôm nay có các tin tức sau\n"
-        // Bắt đầu một coroutine
         withContext(Dispatchers.IO) {
-            // Gọi hàm getArticle trong một coroutine
             hashMap = getArticle(url)
         }
-
-        // Xử lý kết quả trả về từ hàm getArticle trên luồng chính
         for ((key, value) in hashMap) {
             Log.d(
                 "hashMap",
@@ -890,7 +823,6 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
             titleArticle += "Tin số $key ${value.third}\n"
         }
         titleArticle += "Bạn muốn đọc tin số mấy?"
-        // Cập nhật giao diện hoặc thực hiện các tác vụ khác trên luồng chính nếu cần
         Log.d("hashMap", titleArticle)
     }
 
@@ -909,7 +841,7 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
             }
 
             val articles = doc.select("article").take(7)
-            val uniqueLinks = mutableSetOf<String>() // Sử dụng một set để lưu trữ các href duy nhất
+            val uniqueLinks = mutableSetOf<String>()
             for (article in articles) {
                 val links = article.select("a[href]")
                 for (link in links) {
@@ -973,44 +905,27 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
             try {
                 var message = "Không có thông tin"
                 val document: Document = Jsoup.connect(url).get()
-
-                // Lấy tất cả các phần tử table từ trang web
                 val tables: Elements = document.getElementsByTag("table")
-
-                // Lặp qua từng bảng
                 for (table in tables) {
-                    // Lấy tất cả các hàng trong bảng
                     val rows: Elements = table.getElementsByTag("tr")
-
-                    // Biến để lưu trữ thông điệp
                     message = ""
-
-                    // Lặp qua từng hàng
                     for (row in rows) {
-                        // Lấy tất cả các ô trong hàng
                         val cells: Elements = row.getElementsByTag("td")
                         val rowData = ArrayList<String>()
-
-                        // Lặp qua từng ô trong hàng
                         for (cell in cells) {
-                            // Lưu giá trị của ô vào danh sách dữ liệu của hàng
                             rowData.add(cell.text())
                         }
-
-                        // Kiểm tra nếu hàng không rỗng và có đúng 3 ô
                         if (rowData.size == 3) {
                             val matHang = rowData[0]
                             val gia = rowData[1]
                             val soVoiKyTruoc = rowData[2]
-
                             if (matHang != "Mặt hàng") {
-                                // Tạo thông điệp với dữ liệu từ hàng
                                 message += "$matHang: $gia đồng/lít. (Tăng $soVoiKyTruoc đồng)\n"
                             }
                         }
                     }
                     message += "\nThông tin từ website vnexpress.net"
-                    break // Chỉ xử lý bảng đầu tiên (bạn có thể xử lý tất cả các bảng nếu cần)
+                    break
                 }
                 return@async message
             } catch (e: Exception) {
@@ -1020,79 +935,63 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
         }
     }
 
-    private fun getXoSoFromUrlAsync(url: String): Deferred<String> {
-        return GlobalScope.async {
-            try {
-                var content = "Không có thông tin"
-                // Gửi yêu cầu GET đến API và lấy dữ liệu JSON trả về
-                val jsonResponse = URL(url).readText()
 
-                // Phân tích dữ liệu JSON bằng JSONObject
-                val jsonObject = JSONObject(jsonResponse)
-
-                // Truy xuất các giá trị từ đối tượng JSON
-                val time = jsonObject.getString("time")
-                val gdb = jsonObject.getJSONObject("results").getJSONArray("ĐB").getString(0)
-                val g1 = jsonObject.getJSONObject("results").getJSONArray("G1").getString(0)
-                val g2Array = jsonObject.getJSONObject("results").getJSONArray("G2")
-                val g3Array = jsonObject.getJSONObject("results").getJSONArray("G3")
-                val g4Array = jsonObject.getJSONObject("results").getJSONArray("G4")
-                val g5Array = jsonObject.getJSONObject("results").getJSONArray("G5")
-                val g6Array = jsonObject.getJSONObject("results").getJSONArray("G6")
-                val g7Array = jsonObject.getJSONObject("results").getJSONArray("G7")
-
-                // Chuyển đổi các mảng JSONArray thành danh sách MutableList<String>
-                val g2List = mutableListOf<String>()
-                for (i in 0 until g2Array.length()) {
-                    g2List.add(g2Array.getString(i))
+    private fun addTask(userId: String, date: String, title: String) {
+        val db = FirebaseFirestore.getInstance()
+        val taskId = db.collection("Tasks").document().id
+        val task = Task(id = taskId, title = title, status = "Chưa làm")
+        db.collection("Tasks").document(taskId).set(task)
+            .addOnSuccessListener {
+                Log.d("TaskActivity", "Task added to Tasks collection successfully")
+                val tasksByDateId = "$date-$userId"
+                val tasksByDateRef = db.collection("TasksByDate").document(tasksByDateId)
+                tasksByDateRef.get().addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val document = task.result
+                        if (document != null && document.exists()) {
+                            tasksByDateRef.update("taskIds", FieldValue.arrayUnion(taskId))
+                                .addOnSuccessListener {
+                                    Log.d("TaskActivity", "Task added to TasksByDate collection successfully")
+                                    db.collection("User").document(userId)
+                                        .update("taskIds", FieldValue.arrayUnion(taskId))
+                                        .addOnSuccessListener {
+                                            showToast(this, "Thêm nhiệm vụ thành công")
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.e("TaskActivity", "Failed to update user's taskIds", e)
+                                        }
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("TaskActivity", "Failed to update TasksByDate", e)
+                                }
+                        } else {
+                            val newTaskDate = hashMapOf(
+                                "taskIds" to arrayListOf(taskId)
+                            )
+                            tasksByDateRef.set(newTaskDate)
+                                .addOnSuccessListener {
+                                    Log.d("TaskActivity", "TaskByDate document created successfully")
+                                    db.collection("User").document(userId)
+                                        .update("taskIds", FieldValue.arrayUnion(taskId))
+                                        .addOnSuccessListener {
+                                            Log.d("TaskActivity", "Task added to User's taskIds successfully")
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.e("TaskActivity", "Failed to update user's taskIds", e)
+                                        }
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("TaskActivity", "Failed to create TaskByDate document", e)
+                                }
+                        }
+                    } else {
+                        Log.e("TaskActivity", "Failed to get TaskByDate document", task.exception)
+                    }
                 }
-
-                val g3List = mutableListOf<String>()
-                for (i in 0 until g3Array.length()) {
-                    g3List.add(g3Array.getString(i))
-                }
-
-                val g4List = mutableListOf<String>()
-                for (i in 0 until g4Array.length()) {
-                    g4List.add(g4Array.getString(i))
-                }
-
-                val g5List = mutableListOf<String>()
-                for (i in 0 until g5Array.length()) {
-                    g5List.add(g5Array.getString(i))
-                }
-
-                val g6List = mutableListOf<String>()
-                for (i in 0 until g6Array.length()) {
-                    g6List.add(g6Array.getString(i))
-                }
-
-                val g7List = mutableListOf<String>()
-                for (i in 0 until g7Array.length()) {
-                    g7List.add(g7Array.getString(i))
-                }
-                content = ""
-                content += "Thời gian: $time\nGiải đặc biệt: $gdb\nGiải nhất: $g1\nGiải nhì:  ${
-                    g2List.joinToString(
-                        separator = ", "
-                    )
-                }\n"
-                // In ra các giá trị đã lấy được
-                Log.d("checkkk", "Thời gian: $time")
-                println("ĐB: $gdb")
-                println("G1: $g1")
-                Log.d("checkkk", "G2: ${g2List.joinToString(separator = ", ")}")
-                println("G3: ${g3List.joinToString(separator = ", ")}")
-                println("G4: ${g4List.joinToString(separator = ", ")}")
-                println("G5: ${g5List.joinToString(separator = ", ")}")
-                println("G6: ${g6List.joinToString(separator = ", ")}")
-                println("G7: ${g7List.joinToString(separator = ", ")}")
-                return@async content
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return@async "Có lỗi xảy ra khi truy cập thông tin XSMB."
             }
-        }
+            .addOnFailureListener { e ->
+                Log.e("TaskActivity", "Failed to add task", e)
+            }
     }
     fun addSingleEvent(userId: String, event: Event)  {
         val db = FirebaseFirestore.getInstance()
@@ -1100,7 +999,6 @@ private suspend fun getEventsByUserAndDate(userId: String, date: String): List<E
 
         eventRef.set(event)
             .addOnSuccessListener {
-                // Thêm eventId vào danh sách eventID của người dùng
                 db.collection("User").document(userId)
                     .update("eventID", FieldValue.arrayUnion(event.eventID))
                     .addOnSuccessListener {

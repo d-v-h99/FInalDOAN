@@ -17,8 +17,8 @@ class TopRightDotSpan(private val radius: Float, private val color: Int) : LineB
             p.color = color
         }
         c.drawCircle(
-            (right - radius - 2).toFloat(),  // Adjust position to right
-            (top + radius + 2).toFloat(),    // Adjust position to top
+            (right - radius - 2).toFloat(),
+            (top + radius + 2).toFloat(),
             radius, p
         )
         p.color = oldColor

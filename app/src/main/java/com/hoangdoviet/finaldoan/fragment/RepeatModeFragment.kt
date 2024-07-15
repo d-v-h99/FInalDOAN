@@ -16,34 +16,12 @@ import androidx.fragment.app.DialogFragment
 import com.hoangdoviet.finaldoan.R
 import com.hoangdoviet.finaldoan.databinding.FragmentRepeatModeBinding
 import com.hoangdoviet.finaldoan.utils.RepeatMode
-import com.hoangdoviet.finaldoan.utils.argument
 import kotlin.math.roundToInt
 
 
 class RepeatModeFragment : DialogFragment() {
     private lateinit var binding: FragmentRepeatModeBinding
     private var listener: OnRepeatModeSelectedListener? = null
-//    val Int.dp: Int
-//        get() = (Resources.getSystem().displayMetrics.density * this).roundToInt()
-//    private var repeatMode: RepeatMode by argument()
-//    private var onSelected: (mode: RepeatMode) -> Unit = {}
-//    private val repeatModeList = listOf(
-//        RepeatMode.Never,
-//        RepeatMode.Day,
-//        RepeatMode.WorkDay,
-//        RepeatMode.Week,
-//        RepeatMode.Month,
-//        RepeatMode.Year,
-//        RepeatMode.Custom(3),
-//    )
-//override fun onAttach(context: Context) {
-//    super.onAttach(context)
-//    if (context is OnRepeatModeSelectedListener) {
-//        listener = context
-//    } else {
-//        throw RuntimeException("$context must implement OnRepeatModeSelectedListener")
-//    }
-//}
 override fun onAttach(context: Context) {
     super.onAttach(context)
     val parent = targetFragment
@@ -60,9 +38,6 @@ override fun onAttach(context: Context) {
     ): View? {
         if (!::binding.isInitialized) {
             binding = FragmentRepeatModeBinding.inflate(inflater)
-//            repeatModeList.map { it.generateRadioButton() }.forEach {
-//                binding.radioGroup.addView(it)
-//            }
         }
         return binding.root
     }
@@ -91,8 +66,6 @@ override fun onAttach(context: Context) {
                 listener?.onRepeatModeSelected(it.toString(), selectedRadioButton.id)
             }
             dismissAllowingStateLoss()
-
-            // Do something with the selected text
         }
 
     }

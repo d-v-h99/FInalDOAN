@@ -69,38 +69,23 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
     private val userViewModel: UserGoogleViewModel by activityViewModels()
     private var checklogin = false
     private var mCredential: GoogleAccountCredential? = null
+    override fun animateStatusBar() = false
+    override fun getStatusBarColor() = Color.TRANSPARENT
 
-    override fun animateStatusBar() = false  // Tắt animation cho status bar
-    override fun getStatusBarColor() = Color.TRANSPARENT  // Đặt màu status bar là trong suốt
-
-    //        override fun getExpandedHeight() = SuperBottomSheetFragment.ExpandedHeight.MATCH_PARENT
     override fun getDim() = 0.4f
     override fun isSheetAlwaysExpanded() = true
     override fun getExpandedHeight(): Int = resources.getDimensionPixelSize(R.dimen.expanded_height)
     override fun getCornerRadius() = resources.getDimension(R.dimen.custom_corner_radius)
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        arguments?.let {
-//            eventDelete = it.getParcelable("event")!!
-//            position = it.getInt("position")
-//        }
-//    }
-
-
     companion object {
         @JvmStatic
         fun newInstance(event: Event, position: Int) =
             EventFragment().apply {
                 arguments = Bundle().apply {
-                    // Thiết lập arguments của Fragment. Bundle được sử dụng để lưu trữ dữ liệu mà bạn muốn truyền vào Fragment
                     putParcelable("event", event)
                     putInt("position", position)
                 }
             }
     }
-//    override fun getTheme(): Int {
-//        return R.style.CustomBottomSheetDialog
-//    }
 
     private val datePicker by lazy {
         val picker = TimePickerBuilder(requireContext()) { date, v ->
@@ -110,11 +95,11 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
             textDatePicker = formatDate(date, false)
         }
             .setType(booleanArrayOf(true, true, true, false, false, false))
-            .isDialog(true) //默认设置false ，内部实现将DecorView 作为它的父控件。
-            .setCancelText("Huỷ")//取消按钮文字
-            .setSubmitText("Xác nhận")//确认按钮文字
+            .isDialog(true)
+            .setCancelText("Huỷ")
+            .setSubmitText("Xác nhận")
             .addOnCancelClickListener { Log.i("pvTime", "onCancelClickListener") }
-            .setItemVisibleCount(5) //若设置偶数，实际值会加1（比如设置6，则最大可见条目为7）
+            .setItemVisibleCount(5)
             .setLineSpacingMultiplier(4.0f)
             .isAlphaGradient(false)
             .build()
@@ -130,26 +115,19 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
         picker.dialogContainerLayout.layoutParams = params
         mDialog.window?.apply {
             setWindowAnimations(com.bigkoo.pickerview.R.style.picker_view_slide_anim) //修改动画样式
-            setGravity(Gravity.BOTTOM) //改成Bottom,底部显示
+            setGravity(Gravity.BOTTOM)
             setDimAmount(0.3f)
         }
         picker
     }
 
-//    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-//        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-//        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-//        return dialog
-//    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         super.onCreateView(inflater, container, savedInstanceState)
-        // Áp dụng CustomMaterial3Theme cho Fragment này
-//        val contextThemeWrapper = ContextThemeWrapper(requireContext(), R.style.CustomMaterial3Theme)
-//        val localInflater = inflater.cloneInContext(contextThemeWrapper)
         binding = FragmentEventBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -169,7 +147,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
         }
         binding.btnSave.text = "Sửa sự kiện"
         binding.button2.text = "Xoá sự kiện"
-        // Thiết lập các chi tiết sự kiện khác nếu cần
     }
 
 
@@ -243,14 +220,12 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                     Log.d("checksave", event.toString())
 
                     if (idRadio == 0) {
-                        // Sự kiện đơn lẻ
                         if (checklogin) {
                             createCalendarEvent(event, null)
                         }
                         addSingleEvent(currentUserUid, event)
 
                     } else {
-                        // Sự kiện lặp lại
                         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                         val dateStart = dateFormat.parse(event.date)
                         val dateEnd = addYearsToDate(dateStart, 1)
@@ -274,7 +249,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                             endDateFormatted
                         )
                     }
-//                deleteEvent("e0c6c8ef-f673-4d96-b4e8-01bb4aa3cfd0")
 
                 } catch (e: Exception) {
                     Log.e("EventFragment", "Error creating event", e)
@@ -300,7 +274,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                     if (idRadio == 0) {
                         updateEvent(eventupdate)
                     } else {
-                        // Sự kiện lặp lại
                         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                         val dateStart = dateFormat.parse(eventupdate.date)
                         val dateEnd = addYearsToDate(dateStart, 1)
@@ -321,27 +294,19 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                         )
                     }
                 } else {
-
                     // xu ly sua su kien co lap
                     eventupdate?.let { event ->
                         val dialog = UpdateEventModeFragment.newInstance(event, position)
                         dialog.setTargetFragment(this, 0)
                         dialog.show(parentFragmentManager, "UpdateEventModeFragment")
                     }
-
-
                 }
 
             }
-
-//            deleteEvent("779e81b9-e0a0-41e9-9cad-fd81c6e849ed")
-//            deleteAllRepeatingEvents("2055ddb4-c907-4c5b-b71a-c496b8edc4a8")
-//            deleteFutureRepeatingEvents("5197007d-1143-4182-aae0-5fdbcaf07483")
         }
         binding.button2.setOnClickListener {
             if (binding.button2.text == "Xoá sự kiện") {
                 if (eventDelete.originalEventID.isNotEmpty()) {
-                    //showDeleteEventDialog(eventDelete)
                     eventDelete?.let { event ->
                         val dialog = DeleteEventModeFragment.newInstance(event, position)
                         dialog.setTargetFragment(this, 0)
@@ -350,7 +315,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                 } else {
                     deleteEvent(eventDelete.eventID)
                     showToast(requireContext(), "Xoá sự kiẹn thành công")
-                    //dismiss()
                 }
 
             } else {
@@ -389,16 +353,10 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
 
     private fun getCurrentTimeAndDate(): Triple<String, String, Date> {
         val calendar = Calendar.getInstance()
-
-        // Định dạng giờ phút hiện tại
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val timeStart = timeFormat.format(calendar.time)
-
-        // Tăng thêm 30 phút
         calendar.add(Calendar.MINUTE, 30)
         val timeEnd = timeFormat.format(calendar.time)
-
-        // Lấy đối tượng Date hiện tại
         val currentDate = calendar.time
 
         return Triple(timeStart, timeEnd, currentDate)
@@ -406,7 +364,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
 
     private fun isTimeEndAfterTimeStart(timeStart: String, timeEnd: String): Boolean {
         val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-
         return try {
             val startDate = dateFormat.parse(timeStart)
             val endDate = dateFormat.parse(timeEnd)
@@ -427,17 +384,13 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
     }
 
     private fun setAlarm(event: Event) {
-        // Kiểm tra và yêu cầu quyền SCHEDULE_EXACT_ALARM
         checkAndRequestExactAlarmPermission()
-
         val alarmManager = context?.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
         // Tạo Intent để truyền thông tin sự kiện cho AlarmReceiver
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("EVENT_TITLE", event.title)
             putExtra("EVENT_DATE", event.date)
         }
-
         // Tạo PendingIntent
         val pendingIntent = PendingIntent.getBroadcast(
             context,
@@ -447,7 +400,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
         )
 
         Log.d("EventFragment", "setAlarm: Setting alarm for event ${event.title} on ${event.date}")
-
         // Thiết lập thời gian thông báo
         val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         val dateTime = "${event.date} ${event.timeStart}"
@@ -456,7 +408,7 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
         eventTime?.let {
             val calendar = Calendar.getInstance().apply {
                 time = it
-                add(Calendar.MINUTE, -15) // Trừ đi 15 phút
+                add(Calendar.MINUTE, -15)
             }
 
             Log.d("EventFragment", "setAlarm: Alarm set for ${calendar.time}")
@@ -465,22 +417,11 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
-
-
-
-
-    //    private fun showDeleteEventDialog(event: Event) {
-//        val dialog = DeleteEventModeFragment.newInstance(event)
-//        dialog.setTargetFragment(this, 0)
-//        dialog.show(parentFragmentManager, "DeleteEventModeFragment")
-//    }
     fun addEventWithRepeats(userId: String, event: Event, repeatMode: RepeatMode, endDate: String) {
         val db = FirebaseFirestore.getInstance()
         val events = createRepeatingEvents(event, repeatMode, endDate)
-
         val batch = db.batch()
         val userRef = db.collection("User").document(userId)
-
         // Lưu sự kiện gốc
         val originalEvent = events.firstOrNull()
         originalEvent?.let {
@@ -488,18 +429,17 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
             batch.set(originalEventRef, it)
             batch.update(userRef, "eventID", FieldValue.arrayUnion(it.eventID))
         }
-
         // Lưu các sự kiện lặp lại còn lại
         events.drop(1).forEach { repeatingEvent ->
             val eventRef = db.collection("Events").document(repeatingEvent.eventID)
             batch.set(eventRef, repeatingEvent)
             batch.update(userRef, "eventID", FieldValue.arrayUnion(repeatingEvent.eventID))
         }
-
         batch.commit().addOnSuccessListener {
             //showToast(requireContext(), "Repeating events added and user updated successfully")
             dismiss() // Chỉ đóng giao diện khi lưu thành công
         }.addOnFailureListener { e ->
+            Log.d("checkluu", e.toString())
             showToast(requireContext(), "Có lỗi với các sự kiện lặp: $e")
         }
     }
@@ -508,7 +448,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
     fun addSingleEvent(userId: String, event: Event) {
         val db = FirebaseFirestore.getInstance()
         val eventRef = db.collection("Events").document(event.eventID)
-
         eventRef.set(event)
             .addOnSuccessListener {
                 // Thêm eventId vào danh sách eventID của người dùng
@@ -516,8 +455,8 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                     .update("eventID", FieldValue.arrayUnion(event.eventID))
                     .addOnSuccessListener {
                        // showToast(requireContext(), "Event added and user updated successfully")
-                        setAlarm(event) // Thiết lập thông báo cho sự kiện mớ
-                        dismiss() // Chỉ đóng giao diện khi lưu thành công
+                        setAlarm(event)
+                        dismiss()
                     }
                     .addOnFailureListener { e ->
                         showToast(requireContext(), "Cõ lỗi khi thêm sự kiện: $e")
@@ -540,7 +479,7 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                     .update("eventID", FieldValue.arrayRemove(eventId))
                     .addOnSuccessListener {
                         showToast(requireContext(), "Xoá sự kiện thành công")
-                        // Gửi kết quả lại cho MonthFragment mặc định c
+                        // Gửi kết quả lại cho MonthFragment
                         setFragmentResult("requestKey", Bundle().apply {
                             putInt("position", position)
                             Log.d("ktraa", position.toString() + " Event delete 1 đứa")
@@ -572,7 +511,7 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
                     .update("eventID", FieldValue.arrayUnion(eventId))
                     .addOnSuccessListener {
                         showToast(requireContext(), "Cập nhật sự kiện thành công")
-                        setAlarm(event) // Thiết lập thông báo cho sự kiện mớ
+                        setAlarm(event)
                         // Gửi kết quả lại cho MonthFragment
                         setFragmentResult("requestKey1", Bundle().apply {
                             putInt("position", position)
@@ -591,97 +530,14 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
             }
     }
 
-    // xoa tat ca lich trinh lap giu lai lich trinh goc
-    fun deleteAllRepeatingEvents(originalEventID: String) {
-        val db = FirebaseFirestore.getInstance()
-        val eventsRef = db.collection("Events")
-
-        eventsRef.whereEqualTo("originalEventID", originalEventID).get()
-            .addOnSuccessListener { documents ->
-                val batch = db.batch()
-                documents.forEach { document ->
-                    batch.delete(document.reference)
-                }
-                batch.commit().addOnSuccessListener {
-                    showToast(requireContext(), "All repeating events deleted successfully")
-                }.addOnFailureListener { e ->
-                    showToast(requireContext(), "Error deleting repeating events: $e")
-                }
-            }.addOnFailureListener { e ->
-                showToast(requireContext(), "Error fetching repeating events: $e")
-            }
-    }
-
-    // xoa chinh sua su kien nay va cac su kien tiep theo
-    fun deleteFutureRepeatingEvents(eventID: String) {
-        val db = FirebaseFirestore.getInstance()
-        val eventsRef = db.collection("Events")
-
-        eventsRef.document(eventID).get().addOnSuccessListener { document ->
-            if (document.exists()) {
-                val event = document.toObject(Event::class.java)
-                if (event != null) {
-                    val originalEventID = event.originalEventID.ifEmpty { eventID }
-                    eventsRef.whereEqualTo("originalEventID", originalEventID)
-                        .whereGreaterThanOrEqualTo("date", event.date)
-                        .get()
-                        .addOnSuccessListener { documents ->
-                            val batch = db.batch()
-                            documents.forEach { doc ->
-                                batch.delete(doc.reference)
-                            }
-                            batch.commit().addOnSuccessListener {
-                                Log.d("checkdelete", "Future repeating events deleted successfully")
-                            }.addOnFailureListener { e ->
-                                Log.d("checkdelete", "Error deleting future repeating events: $e")
-                            }
-                        }.addOnFailureListener { e ->
-                            Log.d("checkdelete", "Error fetching future repeating events: $e")
-                        }
-                } else {
-                    Log.d("checkdelete", "Event is null")
-                }
-            } else {
-                Log.d("checkdelete", "Event document does not exist")
-            }
-        }.addOnFailureListener { e ->
-            Log.d("checkdelete", "Error fetching event: $e")
-        }
-    }
-
-
-    fun addEvent(userId: String, event: Event) {
-        val db = FirebaseFirestore.getInstance()
-        val eventRef = db.collection("Events").document(event.eventID)
-
-        eventRef.set(event)
-            .addOnSuccessListener {
-                // Thêm eventId vào danh sách eventID của người dùng
-                db.collection("User").document(userId)
-                    .update("eventID", FieldValue.arrayUnion(event.eventID))
-                    .addOnSuccessListener {
-                        showToast(requireContext(), "Event added and user updated successfully")
-                        dismiss() // Chỉ đóng giao diện khi lưu thành công
-                    }
-                    .addOnFailureListener { e ->
-                        showToast(requireContext(), "Error updating user: $e")
-                    }
-            }
-            .addOnFailureListener { e ->
-                showToast(requireContext(), "Error adding event: $e")
-            }
-    }
-
     fun createRepeatingEvents(event: Event, repeatMode: RepeatMode, endDate: String): List<Event> {
         val events = mutableListOf<Event>()
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val beginTime = dateFormat.parse(event.date)?.time ?: return events
         val endTime = dateFormat.parse(endDate)?.time ?: return events
-
         var currentIndex = 0
         var newBeginTime = beginTime
-        var originalEventId = event.eventID // Gán eventID của sự kiện gốc
-
+        var originalEventId = event.eventID
         while (newBeginTime <= endTime) {
             val newDate = dateFormat.format(Date(newBeginTime))
             val newEvent = if (currentIndex == 0) {
@@ -701,8 +557,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
             currentIndex++
             newBeginTime = repeatMode.repeatBeginTimeByIndex(beginTime, currentIndex)
         }
-
-        // Log ra toàn bộ mảng events
         for (e in events) {
             Log.d("CreateRepeatingEvents", e.toString())
         }
@@ -798,17 +652,16 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
         var timeFormat = ""
         val picker = TimePickerBuilder(view.context) { date, _ ->
             timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
-            // Cập nhật giá trị lên TextView tương ứng
             view.text = timeFormat
         }
             .setType(booleanArrayOf(false, false, false, true, true, false))
-            .setCancelText("Huỷ") // Nút Huỷ
-            .setSubmitText("Xác nhận") // Nút Xác nhận
-            .isDialog(true) // Hiển thị dưới dạng Dialog
+            .setCancelText("Huỷ")
+            .setSubmitText("Xác nhận")
+            .isDialog(true)
             .addOnCancelClickListener { Log.i("pvTime", "onCancelClickListener") }
-            .setItemVisibleCount(5) // Số lượng item hiển thị
-            .setLineSpacingMultiplier(4.0f) // Khoảng cách giữa các dòng
-            .isAlphaGradient(false) // Không sử dụng gradient alpha
+            .setItemVisibleCount(5)
+            .setLineSpacingMultiplier(4.0f)
+            .isAlphaGradient(false)
             .build()
 
         val mDialog: Dialog = picker.dialog
@@ -821,9 +674,9 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
         params.rightMargin = 0
         picker.dialogContainerLayout.layoutParams = params
         mDialog.window?.apply {
-            setWindowAnimations(com.bigkoo.pickerview.R.style.picker_view_slide_anim) // Hiệu ứng Animation
-            setGravity(Gravity.BOTTOM) // Hiển thị ở phía dưới
-            setDimAmount(0.3f) // Độ mờ của nền
+            setWindowAnimations(com.bigkoo.pickerview.R.style.picker_view_slide_anim)
+            setGravity(Gravity.BOTTOM)
+            setDimAmount(0.3f)
         }
         return TimePickerResult(picker, timeFormat)
     }
@@ -832,7 +685,6 @@ class EventFragment : SuperBottomSheetFragment(), RepeatModeFragment.OnRepeatMod
         val dayFormat = SimpleDateFormat("dd", Locale.getDefault())
         val monthFormat = SimpleDateFormat("MM", Locale.getDefault())
         val yearFormat = SimpleDateFormat("yyyy", Locale.getDefault())
-
         val day = dayFormat.format(date)
         val month = monthFormat.format(date)
         val year = yearFormat.format(date)

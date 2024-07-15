@@ -53,16 +53,5 @@ class OneDayFragment : Fragment() {
                 wd = i.value
         }
         binding.weekdayString.text = wd
-        // Truy cập Activity binding
-        binding.relativelayoutfragmentoneday.setOnClickListener {
-            //Toast.makeText(requireContext(), "Dang cham", Toast.LENGTH_SHORT).show()
-            val activityBinding = (activity as? MainActivity)?.getActivityBinding()
-//            activityBinding?.let {
-//                it.fabOption1.visibility = View.GONE
-//                it.fabOption2.visibility = View.GONE
-//                it.fab.visibility = View.VISIBLE
-//                it.fabBackground.visibility = View.GONE
-//            }
-        }
     }
 }

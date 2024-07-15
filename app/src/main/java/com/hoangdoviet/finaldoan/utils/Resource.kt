@@ -1,9 +1,9 @@
 package com.hoangdoviet.hoangfirebase.util
 
 enum class Status {
-    SUCCESS, // Indicates that a resource was successfully loaded.
-    ERROR, // Indicates that there was an error while loading the resource.
-    LOADING // Indicates that a resource is currently being loaded.
+    SUCCESS,
+    ERROR,
+    LOADING
 }
 data class Resource<out T>(
     val status: Status,

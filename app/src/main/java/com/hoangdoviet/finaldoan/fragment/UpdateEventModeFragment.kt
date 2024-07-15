@@ -44,7 +44,6 @@ class UpdateEventModeFragment : DialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         binding =  FragmentUpdateEventModeBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -97,7 +96,6 @@ class UpdateEventModeFragment : DialogFragment() {
                         setFragmentResult("requestKey1", Bundle().apply {
                             putInt("position", position)
                             putParcelable("event", event)
-
                             Log.d("ktraa", position.toString() + " Event updated")
                         })
 
@@ -121,19 +119,13 @@ class UpdateEventModeFragment : DialogFragment() {
 
                 documents.forEach { document ->
                     val event = document.toObject(Event::class.java)
-
-                    // Cập nhật các giá trị của sự kiện với newEventDetails
                     event.title = newEventDetails.title
                     event.timeStart = newEventDetails.timeStart
                     event.timeEnd = newEventDetails.timeEnd
                     event.repeat = newEventDetails.repeat
-
-                    // Tính toán ngày mới cho sự kiện lặp lại
                     val dateStart = dateFormat.parse(event.date)
-                    val newDate = addNextRepeatDate(dateStart, event.repeat)  // Hàm này bạn cần tự định nghĩa để tính ngày tiếp theo
+                    val newDate = addNextRepeatDate(dateStart, event.repeat)
                     event.date = dateFormat.format(newDate)
-
-                    // Cập nhật sự kiện trong batch
                     val eventRef = document.reference
                     batch.set(eventRef, event)
                 }
@@ -153,8 +145,6 @@ class UpdateEventModeFragment : DialogFragment() {
                 showToast(requireContext(), getString(R.string.error_fetching_repeating_events, e.message))
             }
     }
-
-    // Hàm tính toán ngày tiếp theo cho sự kiện lặp lại
     private fun addNextRepeatDate(dateStart: Date, repeatMode: Int): Date {
         val calendar = Calendar.getInstance().apply {
             time = dateStart

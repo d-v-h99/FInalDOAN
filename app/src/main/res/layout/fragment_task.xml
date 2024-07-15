@@ -118,22 +118,21 @@
                             android:layout_height="110dp"
                             android:src="@drawable/star15"
                             app:tint="@color/white"
-                            android:layout_marginStart="260dp"
+                        android:layout_marginEnd="-12dp"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
                             />
 
             <ProgressBar
                 android:id="@+id/scoreProgressBar"
                 android:layout_width="120dp"
                 android:layout_height="105dp"
-                android:layout_marginStart="260dp"
                 android:indeterminateOnly="false"
                 android:progressDrawable="@drawable/background_process_bar"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:progress="0"
-                app:layout_constraintStart_toStartOf="parent"
+               android:layout_marginEnd="2dp"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView

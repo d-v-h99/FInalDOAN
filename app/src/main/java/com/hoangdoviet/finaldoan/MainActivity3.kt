@@ -72,12 +72,9 @@ class MainActivity3 : AppCompatActivity(){
                 assetsDir.mkdirs()
             }
             file.copyTo(File(assetsDir, fileName), overwrite = true)
-
-            // Hiển thị Toast khi lưu thành công
             Toast.makeText(this, "JSON file saved successfully to assets.", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            // Hiển thị Toast khi lưu thất bại
             Toast.makeText(this, "Error saving JSON file: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }

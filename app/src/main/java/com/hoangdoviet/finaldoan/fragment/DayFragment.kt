@@ -28,11 +28,7 @@ import java.util.Timer
 import kotlin.concurrent.scheduleAtFixedRate
 
 class DayFragment : Fragment() {
-
-//    private var _binding: FragmentDayBinding? = null
-//    private val binding get() = _binding!!
     private lateinit var binding: FragmentDayBinding
-
     private var currentDate = Calendar.getInstance()
     private lateinit var threadTime: CountTime
     private var wd = 0
@@ -45,9 +41,6 @@ class DayFragment : Fragment() {
     private lateinit var thangconvat: String
     private var fixMonthLunar = 0
     private var indexFinded = 0
-    private lateinit var start: Calendar
-    private lateinit var end: Calendar
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -77,9 +70,7 @@ class DayFragment : Fragment() {
                 Log.e("DayFragment", "No dates loaded")
                 return@launch
             }
-
             val datesArrayList = ArrayList(dates)
-
             // Tính toán indexFinded sau khi dates được tải
             wd = currentDate.get(Calendar.DAY_OF_WEEK)
             d = currentDate.get(Calendar.DAY_OF_MONTH)
@@ -90,7 +81,9 @@ class DayFragment : Fragment() {
             today = """{"weekday": "$wd", "day": "$d", "month": "$m", "year": "$y"}"""
             indexFinded = findIndexFromPosition(today, 19868, datesArrayList)
             Log.d("vi tri", indexFinded.toString())
-            setupViewPager(datesArrayList)
+            if (isAdded) {
+                setupViewPager(datesArrayList)
+            }
         }
     }
 
@@ -103,7 +96,7 @@ class DayFragment : Fragment() {
                 return i
             }
         }
-        return 0 // Nếu không tìm thấy, trả về 0 hoặc bạn có thể xử lý khác nếu muốn
+        return 0
     }
 
     private fun setupViewPager(dates: ArrayList<String>) {
@@ -121,8 +114,6 @@ class DayFragment : Fragment() {
         thangconvat = thoiGianConVat.getThangConVat(m, y)
         binding.ngayAmLichInOneDay.text = "Ngày\n$d\n$ngayConVat"
         binding.thangAmLichInOneDay.text = "Tháng\n$m\n$thangconvat"
-
-        var lastPosition = indexFinded
         binding.viewpager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrollStateChanged(state: Int) {
             }
@@ -150,13 +141,7 @@ class DayFragment : Fragment() {
 
                 binding.ngayAmLichInOneDay.text = "Ngày\n$d\n$ngayConVat"
                 binding.thangAmLichInOneDay.text = "Tháng\n$m\n$thangconvat"
-                if (position > lastPosition) {
-                    //Log.d("aaaaaaaaaa", "left")
-                }
-                if (position < lastPosition) {
-                    //Log.d("aaaaaaaaaa", "right")
-                }
-                lastPosition = position
+
             }
         })
 
@@ -166,13 +151,7 @@ class DayFragment : Fragment() {
         }
     }
 
-    private fun getDate(calendar: Calendar): String {
-        val wd = calendar.get(Calendar.DAY_OF_WEEK)
-        val d = calendar.get(Calendar.DAY_OF_MONTH)
-        val m = calendar.get(Calendar.MONTH) + 1
-        val y = calendar.get(Calendar.YEAR)
-        return "{'weekday': '$wd' ,'day': '$d', 'month': '$m', 'year': '$y'}"
-    }
+
 
     override fun onResume() {
         super.onResume()
@@ -190,7 +169,6 @@ class DayFragment : Fragment() {
 
         private val thread = Thread(this)
         private val timer = Timer()
-        private var minute = 0
 
         fun start() {
             thread.start()

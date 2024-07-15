@@ -16,7 +16,6 @@ class LunarCalendar {
         }
         return jd.toLong()
     }
-    //Đổi số ngày Julius jd ra ngày dd/mm/yyyy dương lịch
     internal fun jdToDate(jd: Long): String {
         var a: Int
         var b: Int
@@ -27,8 +26,6 @@ class LunarCalendar {
         var day: Int
         var month: Int
         var year: Int
-        //Nếu jd lớn hơn 2299160, sử dụng công thức cho lịch Gregorian.
-        //Nếu jd nhỏ hơn hoặc bằng 2299160, sử dụng công thức cho lịch Julian.
         if (jd > 2299160) {
             a = (jd + 32044).toInt()
             b = (4 * a + 3) / 146097
@@ -46,8 +43,6 @@ class LunarCalendar {
 
         return "$year-$month-$day"
     }
-    //Như trên đã nói, để tính được âm lịch trước hết ta cần xác định các tháng âm lịch bắt đầu vào ngày nào.
-    //Thuật toán sau tính ngày Sóc thứ k kể từ điểm Sóc ngày 1/1/1900. Kết quả trả về là số ngày Julius của ngày Sóc cần tìm.
     private fun getNewMoonDay(k: Double, timeZone: Float): Long {
         val deltat: Double
         val T = k / 1236.85

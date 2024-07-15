@@ -11,7 +11,6 @@ import com.hoangdoviet.finaldoan.databinding.BottomSheetEventListBinding
 import com.hoangdoviet.finaldoan.model.Event
 
 class EventSuperBottomSheetFragment(private val events: List<Event>) : SuperBottomSheetFragment(), EventListAdapter.EventClickListener {
-
     private var _binding: BottomSheetEventListBinding? = null
     private val binding get() = _binding!!
     private lateinit var eventListAdapter: EventListAdapter

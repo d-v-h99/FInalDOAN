@@ -24,7 +24,6 @@ class emailFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         _binding = FragmentEmailBinding.inflate(inflater, container, false)
 
         setupUI()
@@ -47,14 +46,6 @@ class emailFragment : Fragment() {
                 activity?.startActivity(mailIntent)
             }
         }
-    }
-    private fun createResendText(): SpannableString {
-        val resendText = SpannableString(getString(R.string.email_resend_prompt))
-        val color = ContextCompat.getColor(requireActivity(), R.color.on_boarding_span_text_color)
-        val resendColor = ForegroundColorSpan(color)
-        resendText.setSpan(UnderlineSpan(), 33, resendText.length, 0)
-        resendText.setSpan(resendColor, 33, resendText.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
-        return resendText
     }
 
     override fun onDestroyView() {
